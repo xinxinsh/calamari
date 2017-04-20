@@ -17,7 +17,6 @@ config = CalamariConfig()
 def home(request):
     return HttpResponseRedirect(reverse('dashboard', kwargs={'path': ''}))
 
-
 def serve_dir_or_index(request, path, document_root):
     if len(path) == 0:
         path = 'index.html'
