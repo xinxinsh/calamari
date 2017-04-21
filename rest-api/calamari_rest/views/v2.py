@@ -166,6 +166,12 @@ together to a pool.
         for rule in rules:
             rule['osd_count'] = len(osds_by_rule_id[rule['rule_id']])
         return Response(CrushRuleSerializer([DataObject(r) for r in rules], many=True).data)
+    def retrieve(self, request, fsid, rule_id):
+        rule = self.client.get(fsid, CRUSH_RULE, int(rule_id))
+        osds_by_rule_id = self.client.get_sync_object(fsid, 'osd_map', ['osds_by_rule_id'])
+        rule['osd_count'] = len(osds_by_rule_id[rule['rule_id']])
+        return Response(CrushRuleSerializer(DataObject(rule)).data)
+        
 
 
 class CrushRuleSetViewSet(RPCViewSet):

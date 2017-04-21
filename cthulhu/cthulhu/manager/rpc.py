@@ -226,6 +226,12 @@ class RpcInterface(object):
             return self._osd_resolve(cluster, object_id)
         elif object_type == POOL:
             return self._pool_resolve(cluster, object_id)
+        elif object_type == CRUSH_RULE:
+            try:
+                crush_rule = cluster.get_sync_object(OsdMap).crush_rule_by_id[object_id]
+            except KeyError:
+                raise NotFound(CRUSH_RULE, object_id)
+            return crush_rule
         elif object_type == CRUSH_NODE:
             try:
                 crush_node = cluster.get_sync_object(OsdMap).crush_node_by_id[object_id]
