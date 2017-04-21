@@ -13,7 +13,7 @@ from calamari_rest.parsers.v2 import CrushMapParser
 from calamari_rest.serializers.v2 import PoolSerializer, CrushRuleSetSerializer, CrushRuleSerializer, CrushNodeSerializer, CrushTypeSerializer,\
     ServerSerializer, SimpleServerSerializer, SaltKeySerializer, RequestSerializer, \
     ClusterSerializer, EventSerializer, LogTailSerializer, OsdSerializer, ConfigSettingSerializer, MonSerializer, OsdConfigSerializer, \
-    CliSerializer
+    CliSerializer, PgSerializer
 from calamari_rest.views.database_view_set import DatabaseViewSet
 from calamari_rest.views.exceptions import ServiceUnavailable
 from calamari_rest.views.paginated_mixin import PaginatedMixin
@@ -23,7 +23,7 @@ from calamari_rest.views.rpc_view import RPCViewSet, DataObject
 from calamari_rest.permissions import IsRoleAllowed
 from calamari_rest.views.crush_node import lookup_ancestry
 from calamari_common.config import CalamariConfig
-from calamari_common.types import CRUSH_MAP, CRUSH_RULE, CRUSH_NODE, CRUSH_TYPE, POOL, OSD, USER_REQUEST_COMPLETE, USER_REQUEST_SUBMITTED, \
+from calamari_common.types import CRUSH_MAP, CRUSH_RULE, CRUSH_NODE, CRUSH_TYPE, POOL, OSD, PG, USER_REQUEST_COMPLETE, USER_REQUEST_SUBMITTED, \
     OSD_IMPLEMENTED_COMMANDS, MON, OSD_MAP, SYNC_OBJECT_TYPES, ServiceId
 from calamari_common.db.event import Event, severity_from_str, SEVERITIES
 
@@ -103,6 +103,32 @@ Allows retrieval and replacement of a crushmap as a whole
 
     def replace(self, request, fsid):
         return Response(self.client.update(fsid, CRUSH_MAP, None, request.DATA))
+
+class PgViewSet(RPCViewSet):
+    """
+Allows list PGs for a specific cluster
+    """
+    serializer_class = PgSerializer
+
+    def list(self, request, fsid):
+        pg_details = self.client.get_sync_object(fsid, 'pg_summary', ['details'])
+        return Response(PgSerializer(pg_details).data)
+
+    def retrieve(self, request, fsid, pgid):
+        pgs = self.client.get_sync_object(fsid, 'pg_summary', ['pg_by_id'])
+        return Response(PgSerializer(pgs[pgid]).data)
+  
+    def apply(self, request, fsid, pgid, command):
+
+        commands = self.get_valid_commands(request, fsid, pgid)
+
+        if command in commands:
+            return Response(self.client.apply(fsid, PG, pgid, command), status=202)
+        else:
+            return Response('{0} not valid on {1}'.format(command, pgid), status=403)
+
+    def get_valid_commands(self, request, fsid, pgid=None):
+        return self.client.get_valid_commands(fsid, PG, pgid).get('valid_commands')
 
 
 class CrushNodeViewSet(RPCViewSet):

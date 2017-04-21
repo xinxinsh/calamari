@@ -347,6 +347,11 @@ class PoolCreatingRequest(OsdMapModifyingRequest):
         else:
             raise NotImplementedError("Unexpected map {0}".format(sync_type))
 
+class PgRequest(RadosRequest):
+    """
+    Reqeust for PG scrub/deepscrub/repair
+    """
+    pass
 
 class PgProgress(object):
     """

@@ -14,8 +14,9 @@ from cthulhu.manager.crush_node_request_factory import CrushNodeRequestFactory
 from cthulhu.manager.crush_request_factory import CrushRequestFactory
 from cthulhu.manager.osd_request_factory import OsdRequestFactory
 from cthulhu.manager.pool_request_factory import PoolRequestFactory
+from cthulhu.manager.pg_request_factory import PgRequestFactory
 from cthulhu.manager.plugin_monitor import PluginMonitor
-from calamari_common.types import CRUSH_NODE, CRUSH_MAP, SYNC_OBJECT_STR_TYPE, SYNC_OBJECT_TYPES, OSD, POOL, OsdMap, MdsMap, MonMap
+from calamari_common.types import CRUSH_NODE, CRUSH_MAP, SYNC_OBJECT_STR_TYPE, SYNC_OBJECT_TYPES, OSD, POOL, PG, OsdMap, MdsMap, MonMap
 from cthulhu.manager import config, salt_config
 from cthulhu.util import now
 
@@ -184,6 +185,7 @@ class ClusterMonitor(gevent.greenlet.Greenlet):
             CRUSH_MAP: CrushRequestFactory,
             CRUSH_NODE: CrushNodeRequestFactory,
             OSD: OsdRequestFactory,
+            PG: PgRequestFactory,
             POOL: PoolRequestFactory
         }
 

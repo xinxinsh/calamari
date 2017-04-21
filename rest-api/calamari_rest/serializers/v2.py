@@ -386,3 +386,15 @@ class CliSerializer(serializers.Serializer):
     out = serializers.CharField(help_text="Standard out")
     err = serializers.CharField(help_text="Standard error")
     status = serializers.IntegerField(help_text="Exit code")
+
+class PgSerializer(serializers.Serializer):
+    class Meta:
+        fields = ('name', 'state', 'up_primary', 'acting_primary', 'up', 'acting')
+
+    name = serializers.CharField(source='pgid', help_text="PG name")
+    state = serializers.CharField(help_text="PG state")
+    up_primary = serializers.IntegerField(help_text="Up Primary")
+    acting_primary = serializers.IntegerField(help_text="Acting Primary")
+    up = serializers.IntegerField(help_text="Up Set")
+    acting = serializers.IntegerField(help_text="Acting Set")
+

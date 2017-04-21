@@ -260,6 +260,25 @@ class PgSummary(SyncObject):
     """
     str = 'pg_summary'
 
+    @property
+    @memoize
+    def details(self):
+        """
+        A list of pg details
+        """    
+        if self.data is not None:
+            return self.data['detail']
+
+    @property
+    @memoize
+    def pg_by_id(self):
+        """
+        A map : pgid -> pg
+        """  
+
+        pgs = dict([(o['pgid'], o) for o in self.data['detail']])
+
+        return pgs
 
 class Health(SyncObject):
     str = 'health'
@@ -286,6 +305,7 @@ MON = 'mon'
 OSD = 'osd'
 MDS = 'mds'
 POOL = 'pool'
+PG = 'pg'
 OSD_MAP = 'osd_map'
 CRUSH_MAP = 'crush_map'
 CRUSH_RULE = 'crush_rule'
@@ -303,4 +323,5 @@ USER_REQUEST_SUBMITTED = 'submitted'
 
 # List of allowable things to send as ceph commands to OSDs
 OSD_IMPLEMENTED_COMMANDS = ('scrub', 'deep_scrub', 'repair')
+PG_IMPLEMENTED_COMMANDS = ('scrub', 'deep_scrub', 'repair')
 OSD_FLAGS = ('pause', 'noup', 'nodown', 'noout', 'noin', 'nobackfill', 'norecover', 'noscrub', 'nodeep-scrub')

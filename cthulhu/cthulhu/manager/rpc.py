@@ -9,7 +9,7 @@ except ImportError:
 from calamari_common.salt_wrapper import Key, master_config, LocalClient
 from cthulhu.manager import config
 from cthulhu.log import log
-from calamari_common.types import OsdMap, SYNC_OBJECT_STR_TYPE, OSD, OSD_MAP, POOL, CLUSTER, CRUSH_NODE, CRUSH_MAP, CRUSH_RULE, CRUSH_TYPE, ServiceId,\
+from calamari_common.types import OsdMap, SYNC_OBJECT_STR_TYPE, OSD, OSD_MAP, POOL, PG, CLUSTER, CRUSH_NODE, CRUSH_MAP, CRUSH_RULE, CRUSH_TYPE, ServiceId,\
     NotFound, SERVER
 from cthulhu.manager.user_request import SaltRequest
 
@@ -110,6 +110,9 @@ class RpcInterface(object):
 
         if path:
             obj = self._fs_resolve(fs_id).get_sync_object(SYNC_OBJECT_STR_TYPE[object_type])
+
+            log.info("object type is %s" % obj.str)
+            log.info("object info is %s" % obj)
             try:
                 for part in path:
                     if isinstance(obj, dict):
@@ -174,7 +177,8 @@ class RpcInterface(object):
             # Run a resolve to throw exception if it's unknown
             self._osd_resolve(cluster, object_id)
             return cluster.request_apply(OSD, object_id, command)
-
+        elif object_type == PG:
+            return cluster.request_apply(PG, object_id, command)
         else:
             raise NotImplementedError(object_type)
 
@@ -182,7 +186,7 @@ class RpcInterface(object):
         """
         Determine what commands can be run on OSD object_ids
         """
-        if object_type != OSD:
+        if object_type != OSD and object_type != PG:
             raise NotImplementedError(object_type)
 
         cluster = self._fs_resolve(fs_id)

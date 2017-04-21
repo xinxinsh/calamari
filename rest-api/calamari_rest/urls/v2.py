@@ -43,7 +43,7 @@ urlpatterns = patterns(
         calamari_rest.views.v2.RequestViewSet.as_view({'get': 'list'}),
         name='cluster-request-list'),
 
-    # OSDs, Pools, CRUSH
+    # CRUSH
     url(r'^cluster/(?P<fsid>[a-zA-Z0-9-]+)/crush_map$',
         calamari_rest.views.v2.CrushMapViewSet.as_view({'get': 'retrieve', 'post': 'replace'}),
         name='cluster-crush_map'),
@@ -68,6 +68,8 @@ urlpatterns = patterns(
     url(r'^cluster/(?P<fsid>[a-zA-Z0-9-]+)/crush_type/(?P<type_id>\d+)$',
         calamari_rest.views.v2.CrushTypeViewSet.as_view({'get': 'retrieve'}),
         name='cluster-crush_type-detail'),
+
+    # Pool
     url(r'^cluster/(?P<fsid>[a-zA-Z0-9-]+)/pool$',
         calamari_rest.views.v2.PoolViewSet.as_view({'get': 'list', 'post': 'create'}),
         name='cluster-pool-list'),
@@ -77,6 +79,7 @@ urlpatterns = patterns(
                                                     'delete': 'destroy'}),
         name='cluster-pool-detail'),
 
+    # OSD
     url(r'^cluster/(?P<fsid>[a-zA-Z0-9-]+)/osd$',
         calamari_rest.views.v2.OsdViewSet.as_view({'get': 'list'}),
         name='cluster-osd-list'),
@@ -93,6 +96,7 @@ urlpatterns = patterns(
     url(r'^cluster/(?P<fsid>[a-zA-Z0-9-]+)/osd_config$',
         calamari_rest.views.v2.OsdConfigViewSet.as_view({'get': 'osd_config', 'patch': 'update'})),
 
+    # Monitor
     url(r'^cluster/(?P<fsid>[a-zA-Z0-9-]+)/mon$',
         calamari_rest.views.v2.MonViewSet.as_view({'get': 'list'}),
         name='cluster-mon-list'),
@@ -102,6 +106,17 @@ urlpatterns = patterns(
     url(r'^cluster/(?P<fsid>[a-zA-Z0-9-]+)/mon/(?P<mon_id>[a-zA-Z0-9-\.]+)/status$',
         calamari_rest.views.v2.MonViewSet.as_view({'get': 'retrieve_status'}),
         name='cluster-mon-detail-status'),
+
+    # PG
+    url(r'^cluster/(?P<fsid>[a-zA-Z0-9-]+)/pg$',
+        calamari_rest.views.v2.PgViewSet.as_view({'get': 'list'}),
+        name='cluster-pg-list'),
+    url(r'^cluster/(?P<fsid>[a-zA-Z0-9-]+)/pg/(?P<pgid>[a-zA-Z0-9-\.]+)$',
+        calamari_rest.views.v2.PgViewSet.as_view({'get': 'retrieve'}),
+        name='cluster-pg-detail'),
+    url(r'^cluster/(?P<fsid>[a-zA-Z0-9-]+)/pg/(?P<pgid>[a-zA-Z0-9-\.]+)/command/(?P<command>[a-zA-Z_]+)$',
+        calamari_rest.views.v2.PgViewSet.as_view({'post': 'apply'}),
+        name='cluster-pg-command'),
 
     # Direct access to SyncObjects, mainly for debugging
     url(r'^cluster/(?P<fsid>[a-zA-Z0-9-]+)/sync_object$',

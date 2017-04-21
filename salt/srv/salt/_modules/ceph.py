@@ -206,7 +206,8 @@ def pg_summary(pgs_brief):
     return {
         'by_osd': osds,
         'by_pool': pools,
-        'all': all_pgs
+        'all': all_pgs,
+        'detail': pgs_brief
     }
 
 
