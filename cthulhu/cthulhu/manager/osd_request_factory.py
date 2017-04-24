@@ -71,6 +71,25 @@ class OsdRequestFactory(RequestFactory):
             self._cluster_monitor.name,
             [('osd repair', {'who': str(osd_id)})])
 
+    def osdin(self, osd_id):
+        return RadosRequest(
+            "Initiating in on {cluster_name}-osd.{id}".format(cluster_name=self._cluster_monitor.name, id=osd_id),
+            self._cluster_monitor.fsid,
+            self._cluster_monitor.name,
+            [('osd in', {'ids': [str(osd_id)]})])
+    def out(self, osd_id):
+        return RadosRequest(
+            "Initiating out on {cluster_name}-osd.{id}".format(cluster_name=self._cluster_monitor.name, id=osd_id),
+            self._cluster_monitor.fsid,
+            self._cluster_monitor.name,
+            [('osd out', {'ids': [str(osd_id)]})])
+    def down(self, osd_id):
+        return RadosRequest(
+            "Initiating down on {cluster_name}-osd.{id}".format(cluster_name=self._cluster_monitor.name, id=osd_id),
+            self._cluster_monitor.fsid,
+            self._cluster_monitor.name,
+            [('osd down', {'ids': [str(osd_id)]})])
+
     def get_valid_commands(self, osds):
         """
         For each OSD in osds list valid commands

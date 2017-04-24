@@ -54,6 +54,8 @@ class OsdMap(VersionedSyncObject):
         super(OsdMap, self).__init__(version, data)
         if data is not None:
             self.osds_by_id = dict([(o['osd'], o) for o in data['osds']])
+            self.df_by_id = dict([(o['id'], o) for o in data['osd_df']['nodes']])
+            self.perf_by_id = dict([(o['id'], o) for o in data['osd_perf']['osd_perf_infos']])
             self.pools_by_id = dict([(p['pool'], p) for p in data['pools']])
             self.osd_tree_node_by_id = dict([(o['id'], o) for o in data['tree']['nodes'] if o['id'] >= 0])
             self.crush_rule_by_id = dict([(o['rule_id'], o) for o in data['crush']['rules']])
@@ -322,6 +324,6 @@ USER_REQUEST_COMPLETE = 'complete'
 USER_REQUEST_SUBMITTED = 'submitted'
 
 # List of allowable things to send as ceph commands to OSDs
-OSD_IMPLEMENTED_COMMANDS = ('scrub', 'deep_scrub', 'repair')
+OSD_IMPLEMENTED_COMMANDS = ('scrub', 'deep_scrub', 'repair', 'osdin', 'out', 'down')
 PG_IMPLEMENTED_COMMANDS = ('scrub', 'deep_scrub', 'repair')
 OSD_FLAGS = ('pause', 'noup', 'nodown', 'noout', 'noin', 'nobackfill', 'norecover', 'noscrub', 'nodeep-scrub')

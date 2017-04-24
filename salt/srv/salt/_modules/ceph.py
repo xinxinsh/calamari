@@ -473,6 +473,21 @@ def get_cluster_object(cluster_name, sync_type, since):
                 updated_osd_metadata['osd'] = osd_id
                 data['osd_metadata'].append(updated_osd_metadata)
 
+            command = "osd df"
+            ret, raw, outs = json_command(cluster_handle, prefix=command, argdict=kwargs,
+                                         timeout=RADOS_TIMEOUT)
+            if ret == 0:
+                data['osd_df'] = json.loads(raw)
+            else:
+                data['osd_df'] = {}
+
+            command = "osd perf"
+            ret, raw, outs = json_command(cluster_handle, prefix=command, argdict=kwargs,
+                                         timeout=RADOS_TIMEOUT)
+            if ret == 0:
+                data['osd_perf'] = json.loads(raw)
+            else:
+                data['osd_perf'] = {}
     return {
         'type': sync_type,
         'fsid': fsid,

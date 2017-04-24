@@ -90,6 +90,12 @@ urlpatterns = patterns(
         calamari_rest.views.v2.OsdViewSet.as_view({'get': 'get_implemented_commands'})),
     url(r'^cluster/(?P<fsid>[a-zA-Z0-9-]+)/osd/(?P<osd_id>\d+)/command$',
         calamari_rest.views.v2.OsdViewSet.as_view({'get': 'get_valid_commands'})),
+    url(r'^cluster/(?P<fsid>[a-zA-Z0-9-]+)/osd/(?P<osd_id>\d+)/df$',
+        calamari_rest.views.v2.OsdDfViewSet.as_view({'get': 'retrieve'}),
+        name='cluster-osd-df'),
+    url(r'^cluster/(?P<fsid>[a-zA-Z0-9-]+)/osd/(?P<osd_id>\d+)/perf$',
+        calamari_rest.views.v2.OsdPerfViewSet.as_view({'get': 'retrieve'}),
+        name='cluster-osd-perf'),
 
     url(r'^cluster/(?P<fsid>[a-zA-Z0-9-]+)/osd/(?P<osd_id>\d+)/command/(?P<command>[a-zA-Z_]+)$',
         calamari_rest.views.v2.OsdViewSet.as_view({'get': 'validate_command', 'post': 'apply'})),

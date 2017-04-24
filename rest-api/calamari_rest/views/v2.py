@@ -13,7 +13,7 @@ from calamari_rest.parsers.v2 import CrushMapParser
 from calamari_rest.serializers.v2 import PoolSerializer, CrushRuleSetSerializer, CrushRuleSerializer, CrushNodeSerializer, CrushTypeSerializer,\
     ServerSerializer, SimpleServerSerializer, SaltKeySerializer, RequestSerializer, \
     ClusterSerializer, EventSerializer, LogTailSerializer, OsdSerializer, ConfigSettingSerializer, MonSerializer, OsdConfigSerializer, \
-    CliSerializer, PgSerializer
+    CliSerializer, PgSerializer, OsddfSerializer, OsdperfSerializer
 from calamari_rest.views.database_view_set import DatabaseViewSet
 from calamari_rest.views.exceptions import ServiceUnavailable
 from calamari_rest.views.paginated_mixin import PaginatedMixin
@@ -563,7 +563,7 @@ Manage Ceph OSDs.
 
 Apply ceph commands to an OSD by doing a POST with no data to
 api/v2/cluster/<fsid>/osd/<osd_id>/command/<command>
-where <command> is one of ("scrub", "deep-scrub", "repair")
+where <command> is one of ("scrub", "deep-scrub", "repair", "in", "out", "down")
 
 e.g. Initiate a scrub on OSD 0 by POSTing {} to api/v2/cluster/<fsid>/osd/0/command/scrub
 
@@ -682,6 +682,8 @@ Filtering is available on this resource:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def apply(self, request, fsid, osd_id, command):
+        if command == 'in':
+            command = 'osdin'
         if command in self.client.get_valid_commands(fsid, OSD, [int(osd_id)]).get(int(osd_id)).get('valid_commands'):
             return Response(self.client.apply(fsid, OSD, int(osd_id), command), status=202)
         else:
@@ -700,10 +702,32 @@ Filtering is available on this resource:
         return Response(self.client.get_valid_commands(fsid, OSD, osds))
 
     def validate_command(self, request, fsid, osd_id, command):
+        if command == 'in':
+            command = 'osdin'
+
         valid_commands = self.client.get_valid_commands(fsid, OSD, [int(osd_id)]).get(int(osd_id)).get('valid_commands')
 
         return Response({'valid': command in valid_commands})
 
+class OsdDfViewSet(RPCViewSet, RequestReturner):
+    """
+    OSD df Status
+    """
+    serializer_class = OsddfSerializer
+
+    def retrieve(self, request, fsid, osd_id):
+        dfs = self.client.get_sync_object(fsid, 'osd_map', ['df_by_id', int(osd_id)])
+        return Response(self.serializer_class(DataObject(dfs)).data)
+
+class OsdPerfViewSet(RPCViewSet, RequestReturner):
+    """
+    OSD perf status
+    """
+    serializer_class = OsdperfSerializer
+
+    def retrieve(self, request, fsid, osd_id):
+        perf = self.client.get_sync_object(fsid, 'osd_map', ['perf_by_id', int(osd_id)])
+        return Response(self.serializer_class(DataObject(perf)).data)
 
 class OsdConfigViewSet(RPCViewSet, RequestReturner):
     """

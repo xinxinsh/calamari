@@ -149,6 +149,27 @@ class OsdSerializer(ValidatingSerializer):
 # to use a reserved word
 OsdSerializer.base_fields['in'] = OsdSerializer.base_fields['_in']
 
+class OsddfSerializer(serializers.Serializer):
+    class Meta:
+        fields = ('name', 'utilization', 'kb', 'kb_avail', 'kb_used', 'var', 'crush_weight', 'reweight', 'pgs')
+ 
+    name = serializers.CharField(help_text='OSD Name')
+    utilization = serializers.FloatField(help_text='OSD Utilization')
+    kb = serializers.IntegerField(help_text='OSD Total Size')
+    kb_avail = serializers.IntegerField(help_text='OSD Available Size')
+    kb_used = serializers.IntegerField(help_text='OSD Used Size')
+    var = serializers.FloatField(help_text='OSD Variation')
+    crush_weight = serializers.FloatField(help_text='OSD Crush Weight')
+    reweight = serializers.FloatField(help_text='OSD Reweight')
+    pgs = serializers.IntegerField(help_text='OSD PG Count')
+
+class OsdperfSerializer(serializers.Serializer):
+    class Meta:
+        fields = ('id', 'perf_stats')
+
+    id = serializers.IntegerField(help_text='OSD ID')
+    perf_stats = serializers.CharField(help_text='OSD Perf Stat')
+
 
 class OsdConfigSerializer(ValidatingSerializer):
     class Meta:
