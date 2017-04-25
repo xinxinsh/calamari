@@ -192,21 +192,41 @@ class OsdConfigSerializer(ValidatingSerializer):
 
 OsdConfigSerializer.base_fields['nodeep-scrub'] = OsdConfigSerializer.base_fields['nodeepscrub']
 
+class StepItemSerializer(serializers.Serializer):
+    op = serializers.CharField(source='op', help_text="Human readable name", required=True)
+    type = serializers.CharField(required=False)
+    num = serializers.IntegerField(required=False)
+    item = serializers.IntegerField(required=False)
+    item_name = serializers.CharField(help_text="Human readable name", required=False)
 
-class CrushRuleSerializer(serializers.Serializer):
+    class Meta:
+        fields = ('op', 'type', 'num', 'item_name', 'item')
+
+def less_than(limit):
+    def compare(value):
+        if value > limit:
+            raise serializers.ValidationError('This field must be less than %s.' % str(limit))
+    return compare
+
+class CrushRuleSerializer(ValidatingSerializer):
     class Meta:
         fields = ('id', 'name', 'ruleset', 'type', 'min_size', 'max_size', 'steps', 'osd_count')
+        create_allowed = ('name', 'ruleset', 'type', 'min_size', 'max_size', 'steps')
+        create_required = ('name', 'type', 'min_size', 'max_size', 'steps')
+        modify_allowed = ('name', 'ruleset', 'min_size', 'max_size', 'steps')
+        modify_required = ()
 
-    id = serializers.IntegerField(source='rule_id')
+    id = serializers.IntegerField(source='rule_id', required=False)
     name = serializers.CharField(source='rule_name', help_text="Human readable name")
-    ruleset = serializers.IntegerField(help_text="ID of the CRUSH ruleset of which this rule is a member")
-    type = fields.EnumField({CRUSH_RULE_TYPE_REPLICATED: 'replicated', CRUSH_RULE_TYPE_ERASURE: 'erasure'}, help_text="Data redundancy type")
+    ruleset = serializers.IntegerField(help_text="ID of the CRUSH ruleset of which this rule is a member", required=False, validators=[less_than(255), ])
+    type = fields.EnumField({CRUSH_RULE_TYPE_REPLICATED: 'replicated', CRUSH_RULE_TYPE_ERASURE: 'erasure'}, help_text="Data redundancy type", required=False)
     min_size = serializers.IntegerField(
-        help_text="If a pool makes more replicas than this number, CRUSH will NOT select this rule")
+        help_text="If a pool makes more replicas than this number, CRUSH will NOT select this rule", required=False)
     max_size = serializers.IntegerField(
-        help_text="If a pool makes fewer replicas than this number, CRUSH will NOT select this rule")
+        help_text="If a pool makes fewer replicas than this number, CRUSH will NOT select this rule", required=False)
+#    steps = StepItemSerializer(required=True, many=True, help_text="A bucket may have one or more items. The items may consist of node buckets or leaves. Items may have a weight that reflects the relative weight of the item.")
     steps = serializers.Field(help_text="List of operations used to select OSDs")
-    osd_count = serializers.IntegerField(help_text="Number of OSDs which are used for data placement")
+    osd_count = serializers.IntegerField(help_text="Number of OSDs which are used for data placement", required=False)
 
 
 class CrushTypeSerializer(serializers.Serializer):

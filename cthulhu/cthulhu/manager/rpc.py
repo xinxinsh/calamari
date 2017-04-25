@@ -154,6 +154,9 @@ class RpcInterface(object):
         elif object_type == CRUSH_NODE:
             return cluster.request_update('update', CRUSH_NODE, object_id, attributes)
 
+        elif object_type == CRUSH_RULE:
+            return cluster.request_update('update', CRUSH_RULE, object_id, attributes)
+
         else:
             raise NotImplementedError(object_type)
 
@@ -207,6 +210,8 @@ class RpcInterface(object):
             return cluster.request_create(POOL, attributes)
         elif object_type == CRUSH_NODE:
             return cluster.request_create(CRUSH_NODE, attributes)
+        elif object_type == CRUSH_RULE:
+            return cluster.request_create(CRUSH_RULE, attributes)
         else:
             raise NotImplementedError(object_type)
 
@@ -217,6 +222,8 @@ class RpcInterface(object):
             return cluster.request_delete(POOL, object_id)
         elif object_type == CRUSH_NODE:
             return cluster.request_delete(CRUSH_NODE, object_id)
+        elif object_type == CRUSH_RULE:
+            return cluster.request_delete(CRUSH_RULE, object_id)
         else:
             raise NotImplementedError(object_type)
 
