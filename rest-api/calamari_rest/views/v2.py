@@ -23,7 +23,7 @@ from calamari_rest.views.rpc_view import RPCViewSet, DataObject
 from calamari_rest.permissions import IsRoleAllowed
 from calamari_rest.views.crush_node import lookup_ancestry
 from calamari_common.config import CalamariConfig
-from calamari_common.types import CRUSH_MAP, CRUSH_RULE, CRUSH_NODE, CRUSH_TYPE, POOL, OSD, PG, USER_REQUEST_COMPLETE, USER_REQUEST_SUBMITTED, \
+from calamari_common.types import CRUSH_MAP, CRUSH_RULE, CRUSH_NODE, CRUSH_TYPE, POOL, OSD, PG, CONFIG, USER_REQUEST_COMPLETE, USER_REQUEST_SUBMITTED, \
     OSD_IMPLEMENTED_COMMANDS, MON, OSD_MAP, SYNC_OBJECT_TYPES, ServiceId
 from calamari_common.db.event import Event, severity_from_str, SEVERITIES
 
@@ -452,6 +452,29 @@ Configuration settings from a Ceph Cluster.
             raise Http404("Key '%s' not found" % key)
         else:
             return Response(self.serializer_class(setting).data)
+    def update(self, request, fsid, key):
+        ceph_config = self._get_config(fsid)
+        try:
+            old_value = ceph_config[key]
+        except KeyError:
+            raise Http404("Key '%s' not found" % key)
+        new_value = request.DATA['value']
+        
+        # get targets
+        services = []
+        attributes = {}
+
+        for server in self.client.server_list(): 
+            services += server['services']
+        targets = [(o['id'][1], o['id'][2]) for o in services if o['running']]    
+
+        attributes['targets'] = targets
+        attributes['key'] = key
+        attributes['value'] = new_value
+
+        create_response = self.client.update(fsid, CONFIG, key, attributes)
+        return Response(create_response, status=status.HTTP_202_ACCEPTED)
+
 
 
 def _config_to_bool(config_val):

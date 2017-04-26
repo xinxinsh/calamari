@@ -233,7 +233,6 @@ def transform_crushmap(data, operation):
         stdout, stderr = p.communicate()
         return p.returncode, stdout, stderr
 
-
 def rados_commands(fsid, cluster_name, commands):
     """
     Passing in both fsid and cluster_name, because the caller
@@ -258,6 +257,13 @@ def rados_commands(fsid, cluster_name, commands):
             if ret != 0:
                 raise RuntimeError(outs)
             ret, outbuf, outs = json_command(cluster_handle, prefix=prefix, argdict={}, timeout=RADOS_TIMEOUT, inbuf=stdout)
+        elif prefix == 'injectargs':
+            args={}
+            args.update(argdict['data']['args'])
+            for target in argdict['data']['targets']:
+                ret, outbuf, outs = json_command(cluster_handle, target=target, prefix=prefix, argdict=args, timeout=RADOS_TIMEOUT)
+                if ret != 0:
+                    break
         else:
             ret, outbuf, outs = json_command(cluster_handle, prefix=prefix, argdict=argdict, timeout=RADOS_TIMEOUT)
         if ret != 0:

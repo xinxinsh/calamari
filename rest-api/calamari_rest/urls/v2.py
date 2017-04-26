@@ -159,7 +159,7 @@ urlpatterns = patterns(
     url(r'^cluster/(?P<fsid>[a-zA-Z0-9-]+)/config$',
         calamari_rest.views.v2.ConfigViewSet.as_view({'get': 'list'})),
     url(r'^cluster/(?P<fsid>[a-zA-Z0-9-]+)/config/(?P<key>[a-zA-Z0-9_]+)$',
-        calamari_rest.views.v2.ConfigViewSet.as_view({'get': 'retrieve'})),
+        calamari_rest.views.v2.ConfigViewSet.as_view({'get': 'retrieve', 'post': 'update'})),
 
     # Events
     url(r'^event$',

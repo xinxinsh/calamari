@@ -315,6 +315,7 @@ CRUSH_NODE = 'crush_node'
 CRUSH_TYPE = 'crush_type'
 CLUSTER = 'cluster'
 SERVER = 'server'
+CONFIG = 'config'
 
 # The objects that ClusterMonitor keeps copies of from the mon
 SYNC_OBJECT_TYPES = [MdsMap, OsdMap, MonMap, MonStatus, PgSummary, Health, Config]
