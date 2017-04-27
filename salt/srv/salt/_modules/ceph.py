@@ -22,6 +22,7 @@ RADOS_TIMEOUT = 20
 # present, although this is the case on a nicely ceph-deploy'd system
 RADOS_NAME = 'client.admin'
 
+RBD_COMMAND = ['create_image', 'remove_image', 'rename_image']
 
 def fire_event(data, tag):
     """
@@ -154,6 +155,7 @@ SYNC_TYPES = ['mon_status',
               'osd_map',
               'mds_map',
               'pg_summary',
+              'rbd_summary',
               'health',
               'config']
 
@@ -210,7 +212,161 @@ def pg_summary(pgs_brief):
         'detail': pgs_brief
     }
 
+def get_pools(cluster_handle):
+    """
+    get pools of cluster
+    """
 
+    import rados
+    from ceph_argparse import json_command
+
+    ret, raw, outs = json_command(cluster_handle, prefix='osd dump', argdict={'format': 'json'}, timeout=RADOS_TIMEOUT)
+    assert ret == 0
+    data = json.loads(raw)
+    names = []
+    for pool in data['pools']:
+        names.append(pool['pool_name'])
+
+    return names
+
+def old_format(image):
+    """
+    Find out whether the image uses the old RBD format.
+
+    :returns: bool - whether the image uses the old RBD format
+    """
+    is_old = image.old_format()
+
+    return is_old
+
+def list_snaps(image):
+    """
+    Iterate over the snapshots of an image.
+
+    :returns: :class:`SnapIterator`
+    """
+    snap_info = {}
+    for elem in image.list_snaps():
+	elem['protected'] = image.is_protected_snap(elem['name'])
+	snap_info[elem['name']] = elem
+
+    return snap_info
+
+def get_image_features(image):
+    """
+    Get Features about the image
+    """
+    return image.features()
+
+def get_image_flags(image):
+    """
+    Get Flags about the image
+    """
+    return image.flags()
+
+def get_image_lockers(image):
+    """
+    Get Lockers about the image
+    """
+    return image.list_lockers()
+
+def get_image_stat(image):
+    """
+    Get information about the image. Currently parent pool and
+    parent name are always -1 and ''.
+
+    :returns: dict - contains the following keys:
+
+	* ``size`` (int) - the size of the image in bytes
+
+	* ``obj_size`` (int) - the size of each object that comprises the
+	  image
+
+	* ``num_objs`` (int) - the number of objects in the image
+
+	* ``order`` (int) - log_2(object_size)
+
+	* ``block_name_prefix`` (str) - the prefix of the RADOS objects used
+	  to store the image
+
+	* ``parent_pool`` (int) - deprecated
+
+	* ``parent_name``  (str) - deprecated
+
+	See also :meth:`format` and :meth:`features`.
+
+    """
+    return image.stat()
+
+def get_image_parent_info(image):
+    """
+    Get information about a cloned image's parent (if any)
+
+    :returns: tuple - ``(pool name, image name, snapshot name)`` components
+	      of the parent image
+    :raises: :class:`ImageNotFound` if the image doesn't have a parent
+    """
+    try:
+        info = image.parent_info()
+    except:
+        return []
+    else:
+        return info
+
+#def get_image_meta(image):
+#    """
+#    Get metadata about the image
+#    """
+#    return image.metadata_list()
+
+def get_image_info(image):
+    """
+    Get info about the image, including stat, features, lockers, flags, parent info, old format
+    """
+    image_info = {}
+    stat = get_image_stat(image)
+    parent_info = get_image_parent_info(image)
+    features = get_image_features(image)
+    flags = get_image_flags(image)
+    lockers = get_image_lockers(image)
+    is_old = old_format(image)
+    snaps = list_snaps(image)
+#    meta = get_image_meta(image)
+
+    image_info.update(stat)
+    image_info.update({'parent_info': parent_info})
+    image_info.update({'features': features})
+    image_info.update({'flags': flags})
+    image_info.update({'lockers': lockers})
+    image_info.update({'old_format': is_old})
+    image_info.update({'snaps': snaps})
+#    image_info.update({'meta': meta})
+
+    return image_info
+
+def rbd_summary(cluster_handle):
+    """
+    get rbd summary of cluster
+    """
+
+    import rbd
+
+    rbd_summary = {}
+
+    pools = get_pools(cluster_handle)
+    
+    for pool in pools:
+        rbd_summary[pool] = {}
+        ioctx = cluster_handle.open_ioctx(pool)
+        rbd_inst = rbd.RBD()
+        names = rbd_inst.list(ioctx)
+        for name in names:
+            image = rbd.Image(ioctx, name)
+            info = get_image_info(image)
+            rbd_summary[pool].update({name : info})
+
+    return rbd_summary
+            
 def transform_crushmap(data, operation):
     """
     Invokes crushtool to compile or de-compile data when operation == 'set' or 'get'
@@ -394,6 +550,7 @@ def get_cluster_object(cluster_name, sync_type, since):
     # to backfill its history.
 
     import rados
+    import rbd
     from ceph_argparse import json_command
 
     # Check you're asking me for something I know how to give you
@@ -415,6 +572,10 @@ def get_cluster_object(cluster_name, sync_type, since):
         raw = _get_config(cluster_name)
         version = md5(raw)
         data = json.loads(raw)
+    elif sync_type == 'rbd_summary':
+        # Special case for rbd, get this via librbd
+        data = rbd_summary(cluster_handle)
+        version = md5(msgpack.packb(data))
     else:
         command, kwargs, version_fn = {
             'mon_status': ('mon_status', {}, lambda d, r: d['election_epoch']),
@@ -668,6 +829,8 @@ def cluster_status(cluster_handle, cluster_name):
     # Get digest of configuration
     config_digest = md5(_get_config(cluster_name))
 
+    rbd_summary_digest = md5(msgpack.packb(rbd_summary(cluster_handle)))
+  
     return {
         'name': cluster_name,
         'fsid': fsid,
@@ -677,6 +840,7 @@ def cluster_status(cluster_handle, cluster_name):
             'osd_map': osd_epoch,
             'mds_map': mds_epoch,
             'pg_summary': pg_summary_digest,
+            'rbd_summary': rbd_summary_digest,
             'health': health_digest,
             'config': config_digest
         }
@@ -729,3 +893,182 @@ def heartbeat():
         # once the issue is fixed upstream and we are using a more
         # recent salt in calamari.
         pass
+
+class Rbd(object):
+    """
+    This Class is a safe wrapper of librbd.
+    Provide thin RBD operation interfaces.
+    """
+
+    def __init__(self, cluster_name="ceph"):
+        self._cluster_name = cluster_name
+        self._rbd_inst = rbd.RBD()
+        self._ioctx = None
+        self._dest_ioctx = None
+        self._image = None
+        self._result = {}
+
+    def create_image(self, arg_dict):
+        """
+        Create an rbd image. The arg_dict should have the follow attributes.
+        Required parameters:
+            "pool_name": the name of context in which to create the image
+            "image_name": what the image is called
+            "size": how big the image is in bytes
+        Optional parameters:
+            "order": the image is split into (2**order) byte objects, default is None
+            "old_format": whether to create an old-style image that
+                           is accessible by old clients, but can't
+                           use more advanced features like layering.
+                        default is True
+            "features": bitmask of features to enable, default is 0
+            "stripe_unit": stripe unit in bytes (default 0 for object size), default is 0
+            "stripe_count": objects to stripe over before looping, default is 0
+       """
+        order = arg_dict.get('order', None)
+        old_format = arg_dict.get('old_format', True)
+        features = arg_dict.get('features', 0)
+        stripe_unit = arg_dict.get('stripe_unit', 0)
+        stripe_count = arg_dict.get('stripe_count', 0)
+        self._rbd_inst.create(self._ioctx, arg_dict['image_name'], arg_dict['size'], order,
+                              old_format, features, stripe_unit, stripe_count)
+
+    def remove_image(self, arg_dict):
+        """
+        Delete an RBD image. 
+        """
+        self._rbd_inst.remove(self._ioctx, arg_dict['image_name'])
+
+    def image_resize(self, arg_dict):
+        """
+        Change the size of the image.
+
+         param size: the new size of the image
+         type size: int
+        """
+        self._image.resize(arg_dict['size'])
+
+    def copy_image(self, arg_dict):
+        """
+        Copy the image to another location.
+
+        param dest_ioctx: determines which pool to copy into
+        type dest_ioctx: :class:`rados.Ioctx`
+        param dest_name: the name of the copy
+        type dest_name: str
+        raises: :class:`ImageExists`
+        """
+        self._image.copy(self._dest_ioctx, arg_dict['dest_image'])
+
+    def rename_image(self, arg_dict):
+        """
+        Rename an RBD image.
+        """
+        self._rbd_inst.rename(self._ioctx, arg_dict['old_name'], arg_dict['new_name'])
+
+    def create_snap_shot(self, arg_dict):
+        """
+        Create a snapshot of the image.
+
+        :param snap_name: the name of the snapshot
+        :type snap_name: str
+        :raises: :class:`ImageExists`
+        """
+        self._image.create_snap(arg_dict['snap_name'])
+
+    def remove_snap_shot(self, arg_dict):
+        """
+        Delete a snapshot of the image.
+
+        :param snap_name: the name of the snapshot
+        :type snap_name: str
+        :raises: :class:`IOError`, :class:`ImageBusy`
+        """
+        self._image.remove_snap(arg_dict['snap_name'])
+
+    def protect_snap(self, arg_dict):
+        """
+        Mark a snapshot as protected. This means it can't be deleted
+        until it is unprotected.
+
+        :param snap_name: the snapshot to protect
+        :type snap_name: str
+        :raises: :class:`IOError`, :class:`ImageNotFound`
+        """
+        self._image.protect_snap(arg_dict['snap_name'])
+
+    def unprotect_snap(self, arg_dict):
+        """
+        Mark a snapshot unprotected. This allows it to be deleted if
+        it was protected.
+        :param snap_name: the snapshot to unprotect
+        :type snap_name: str
+        :raises: :class:`IOError`, :class:`ImageNotFound`
+        """
+        self._image.unprotect_snap(arg_dict['snap_name'])
+
+    def roll_back_snapshot(self, arg_dict):
+        """
+        Revert the image to its contents at a snapshot. This is a
+        potentially expensive operation, since it rolls back each
+        object individually.
+        """
+        self._image.rollback_to_snap(arg_dict['snap_name'])
+
+    def clone_image(self, arg_dict):
+        """
+        Clone a parent rbd snapshot into a COW sparse child.
+        """
+        features = arg_dict.get('features', 0)
+        order = arg_dict.get('order', None)
+        self._rbd_inst.clone(self._ioctx, arg_dict['image_name'], arg_dict['snap_name'], self._dest_ioctx,
+                             arg_dict['clone_image'], features, order)
+
+    def flatten_image(self, arg_dict):
+        """
+        Flatten clone image (copy all blocks from parent to child)
+        """
+        self._image.flatten()
+
+
+def rbd_commands(fsid, cluster_name, commands):
+
+    rbd = Rbd(cluster_name=cluster_name)
+
+    rbd._result = {}
+    for i, (prefix, arg_dict) in enumerate(commands):
+
+        if not hasattr(rbd, prefix):
+	    continue
+
+        func = getattr(rbd, prefix)
+        cluster_handle = rados.Rados(name=RADOS_NAME, clustername=rbd._cluster_name, conffile='')
+        cluster_handle.connect(timeout=RBD_TIMEOUT)
+
+        try:
+            rbd._ioctx = cluster_handle.open_ioctx(arg_dict['pool_name'])
+	    rbd._dest_ioctx = cluster_handle.open_ioctx(arg_dict['dest_pool']) \
+	        if arg_dict.has_key('dest_pool') else None
+
+	    try:
+ 
+                if prefix not in RBD_COMMAND:
+		    name = arg_dict['image_name']
+		    snap_shot = arg_dict.get('snap_shot', None)
+		    read_only = arg_dict.get('read_only', False)
+		    rbd._result[name] = self._result.get(name, {})
+		    rbd._image = rbd.Image(rbd._ioctx, arg_dict['image_name'], snap_shot, read_only)
+
+	        try:
+		    func(arg_dict)
+	        finally:
+		    rbd._image.close() if rbd._image else None
+
+            finally:
+	        rbd._dest_ioctx.close() if rbd._dest_ioctx else None
+	        rbd._ioctx.close() if rbd._ioctx else None
+
+        finally:
+	    cluster_handle.shutdown()
+
+    return rbd._result
