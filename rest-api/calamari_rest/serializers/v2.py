@@ -439,3 +439,36 @@ class PgSerializer(serializers.Serializer):
     up = serializers.IntegerField(help_text="Up Set")
     acting = serializers.IntegerField(help_text="Acting Set")
 
+class RbdSerializer(serializers.Serializer):
+    class Meta:
+        fields = ('name', 'prefix', 'size', 'obj_size', 'order', 'old_format', 'flags', 'features', 'num_objs', 'parent_name', 'parent_pool')
+
+    name =  serializers.CharField(help_text="RBD Name")
+    prefix =  serializers.CharField(source='block_name_prefix', help_text="Block Name Prefix")
+    size = serializers.IntegerField(help_text="RBD Size")
+    obj_size = serializers.IntegerField(help_text="RBD Object Size")
+    order = serializers.IntegerField(help_text="RBD Object Order")
+    old_format = serializers.BooleanField(help_text="Old Format")
+    flags = serializers.IntegerField(help_text="RBD Flags")
+    features = serializers.IntegerField(help_text="RBD Features")
+    num_objs = serializers.IntegerField(help_text="Number of Objects")
+    parent_name = serializers.CharField(help_text="RBD Parent Name")
+    parent_pool = serializers.CharField(help_text="RBD Parent Pool")
+
+class SnapSerializer(serializers.Serializer):
+    class Meta:
+        fields = ('name', 'id', 'size', 'protected')
+
+
+    name =  serializers.CharField(help_text="Snap Name")
+    id = serializers.IntegerField(help_text="Snap ID")
+    size = serializers.CharField(help_text="Snap Size")
+    protected = serializers.BooleanField(help_text="Snap Protected Flag")
+
+class LockSerializer(serializers.Serializer):
+    class Meta:
+        fields = ('lockers', 'exclusive', 'tag')
+
+    lockers =  serializers.CharField(help_text="Locker Name")
+    tag = serializers.CharField(help_text="Locker Tag")
+    exclusive = serializers.BooleanField(help_text="Locker Exclusive Flag")

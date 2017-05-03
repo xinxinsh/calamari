@@ -285,6 +285,23 @@ class PgSummary(SyncObject):
 class RbdSummary(SyncObject):
     str = 'rbd_summary'
 
+    @property
+    @memoize
+    def volumes_by_pool(self):
+        """
+        A list of volume details
+        """
+        volumes_by_pool = {}
+
+        for pool in self.data.keys():
+            volumes = []
+            for name, stat in self.data[pool].items():
+                stat.update({'name': name})
+                volumes.append(stat)
+            volumes_by_pool.update({pool: volumes})
+
+        return volumes_by_pool
+
 class Health(SyncObject):
     str = 'health'
 

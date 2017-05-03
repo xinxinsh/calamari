@@ -13,7 +13,7 @@ from calamari_rest.parsers.v2 import CrushMapParser
 from calamari_rest.serializers.v2 import PoolSerializer, CrushRuleSetSerializer, CrushRuleSerializer, CrushNodeSerializer, CrushTypeSerializer,\
     ServerSerializer, SimpleServerSerializer, SaltKeySerializer, RequestSerializer, \
     ClusterSerializer, EventSerializer, LogTailSerializer, OsdSerializer, ConfigSettingSerializer, MonSerializer, OsdConfigSerializer, \
-    CliSerializer, PgSerializer, OsddfSerializer, OsdperfSerializer
+    CliSerializer, PgSerializer, OsddfSerializer, OsdperfSerializer, RbdSerializer, SnapSerializer, LockSerializer
 from calamari_rest.views.database_view_set import DatabaseViewSet
 from calamari_rest.views.exceptions import ServiceUnavailable
 from calamari_rest.views.paginated_mixin import PaginatedMixin
@@ -130,6 +130,64 @@ Allows list PGs for a specific cluster
     def get_valid_commands(self, request, fsid, pgid=None):
         return self.client.get_valid_commands(fsid, PG, pgid).get('valid_commands')
 
+class RbdViewSet(RPCViewSet):
+    """
+Allow list RBDs for specific cluster
+    """
+
+    serializer_class = RbdSerializer
+
+    def list(self, request, fsid, pool_id):
+
+        volumes_by_pool = self.client.get_sync_object(fsid, 'rbd_summary', ['volumes_by_pool'])
+        pool_name = self.client.get(fsid, POOL, int(pool_id))['pool_name']
+
+        volumes = volumes_by_pool[pool_name]
+
+        return Response(RbdSerializer([DataObject(r) for r in volumes], many=True).data)
+
+    def retrieve(self, request, fsid, pool_id, rbd_name):
+         
+        volume = {}
+        volumes_by_pool = self.client.get_sync_object(fsid, 'rbd_summary')
+        pool_name = self.client.get(fsid, POOL, int(pool_id))['pool_name']
+
+        volume.update(volumes_by_pool[pool_name][rbd_name])
+        volume.update({'name': rbd_name})
+
+        return Response(RbdSerializer(DataObject(volume)).data)
+
+class SnapViewSet(RPCViewSet):
+    """
+Allow Get Snap for specific RBD
+    """
+    
+    serializer_class = SnapSerializer
+
+    def retrieve(self, request, fsid, pool_id, rbd_name):
+        
+        volumes_by_pool = self.client.get_sync_object(fsid, 'rbd_summary')
+        pool_name = self.client.get(fsid, POOL, int(pool_id))['pool_name']
+
+        snaps = volumes_by_pool[pool_name][rbd_name]['snaps']
+
+        return Response(SnapSerializer([DataObject(v) for k, v in snaps.items()], many=True).data)
+
+class LockViewSet(RPCViewSet):
+    """
+Allow Get Lock for specific RBD
+    """
+
+    serializer_class = LockSerializer
+
+    def retrieve(self, request, fsid, pool_id, rbd_name):
+
+        volumes_by_pool = self.client.get_sync_object(fsid, 'rbd_summary')
+        pool_name = self.client.get(fsid, POOL, int(pool_id))['pool_name']
+
+        lockers = volumes_by_pool[pool_name][rbd_name]['lockers']
+ 
+        return Response(LockSerializer(DataObject(lockers)).data)
 
 class CrushNodeViewSet(RPCViewSet):
     """
