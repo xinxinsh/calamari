@@ -24,7 +24,7 @@ from calamari_rest.permissions import IsRoleAllowed
 from calamari_rest.views.crush_node import lookup_ancestry
 from calamari_common.config import CalamariConfig
 from calamari_common.types import CRUSH_MAP, CRUSH_RULE, CRUSH_NODE, CRUSH_TYPE, POOL, OSD, PG, CONFIG, USER_REQUEST_COMPLETE, USER_REQUEST_SUBMITTED, \
-    OSD_IMPLEMENTED_COMMANDS, MON, OSD_MAP, SYNC_OBJECT_TYPES, ServiceId
+    OSD_IMPLEMENTED_COMMANDS, MON, OSD_MAP, SYNC_OBJECT_TYPES, ServiceId, RBD
 from calamari_common.db.event import Event, severity_from_str, SEVERITIES
 
 from django.views.decorators.csrf import csrf_exempt
@@ -152,10 +152,47 @@ Allow list RBDs for specific cluster
         volumes_by_pool = self.client.get_sync_object(fsid, 'rbd_summary')
         pool_name = self.client.get(fsid, POOL, int(pool_id))['pool_name']
 
-        volume.update(volumes_by_pool[pool_name][rbd_name])
-        volume.update({'name': rbd_name})
+        if rbd_name in volumes_by_pool[pool_name]:
+            volume.update(volumes_by_pool[pool_name][rbd_name])
+            volume.update({'name': rbd_name})
+            return Response(RbdSerializer(DataObject(volume)).data)
+        else:
+            return Response(status=status.HTTP_404_NOT_FOUND)
 
-        return Response(RbdSerializer(DataObject(volume)).data)
+    def create(self, request, fsid, pool_id):
+
+        serializer = self.serializer_class(data=request.DATA)
+        if serializer.is_valid(request.method):
+            attrs = serializer.get_data()
+            pool_name = self.client.get(fsid, POOL, int(pool_id))['pool_name']
+            attrs.update({'pool_name': pool_name})
+            create_response = self.client.create(fsid, RBD, attrs)
+            return Response(create_response, status=status.HTTP_202_ACCEPTED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def destroy(self, request, fsid, pool_id, rbd_name):
+        attrs = {}
+        pool_name = self.client.get(fsid, POOL, int(pool_id))['pool_name']
+        attrs.update({'pool_name': pool_name})
+        delete_response = self.client.delete(fsid, RBD, rbd_name, attrs)
+        return Response(delete_response, status=status.HTTP_202_ACCEPTED)
+
+    def update(self, request, fsid, pool_id, rbd_name):
+        serializer = self.serializer_class(data=request.DATA)
+        if serializer.is_valid(request.method):
+            attrs = serializer.get_data()
+            pool_name = self.client.get(fsid, POOL, int(pool_id))['pool_name']
+            attrs.update({'pool_name': pool_name})
+            if 'name' in attrs and rbd_name != attrs['name']:
+                attrs.update({'new_name': attrs['name']})
+                attrs.update({'name': rbd_name})
+            else:
+                attrs.update({'name': rbd_name})
+            create_response = self.client.update(fsid, RBD, rbd_name, attrs)
+            return Response(create_response, status=status.HTTP_202_ACCEPTED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class SnapViewSet(RPCViewSet):
     """

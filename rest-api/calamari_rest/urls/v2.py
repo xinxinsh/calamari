@@ -126,10 +126,10 @@ urlpatterns = patterns(
 
     #RBD
     url(r'^cluster/(?P<fsid>[a-zA-Z0-9-]+)/pool/(?P<pool_id>\d+)/rbd$',
-        calamari_rest.views.v2.RbdViewSet.as_view({'get': 'list'}),
+        calamari_rest.views.v2.RbdViewSet.as_view({'get': 'list', 'post': 'create'}),
         name='cluster-rbd-list'),
     url(r'^cluster/(?P<fsid>[a-zA-Z0-9-]+)/pool/(?P<pool_id>\d+)/rbd/(?P<rbd_name>[a-zA-Z0-9-_]+)$',
-        calamari_rest.views.v2.RbdViewSet.as_view({'get': 'retrieve'}),
+        calamari_rest.views.v2.RbdViewSet.as_view({'get': 'retrieve', 'delete': 'destroy', 'patch': 'update'}),
         name='cluster-rbd-detail'),
     url(r'^cluster/(?P<fsid>[a-zA-Z0-9-]+)/pool/(?P<pool_id>\d+)/rbd/(?P<rbd_name>[a-zA-Z0-9-_]+)/lock$',
         calamari_rest.views.v2.LockViewSet.as_view({'get': 'retrieve'}),

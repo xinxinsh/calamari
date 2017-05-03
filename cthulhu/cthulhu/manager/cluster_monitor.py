@@ -16,9 +16,10 @@ from cthulhu.manager.crush_request_factory import CrushRequestFactory
 from cthulhu.manager.osd_request_factory import OsdRequestFactory
 from cthulhu.manager.pool_request_factory import PoolRequestFactory
 from cthulhu.manager.pg_request_factory import PgRequestFactory
+from cthulhu.manager.rbd_request_factory import RbdRequestFactory
 from cthulhu.manager.config_request_factory import ConfigRequestFactory
 from cthulhu.manager.plugin_monitor import PluginMonitor
-from calamari_common.types import CONFIG, CRUSH_NODE, CRUSH_RULE, CRUSH_MAP, SYNC_OBJECT_STR_TYPE, SYNC_OBJECT_TYPES, OSD, POOL, PG, OsdMap, MdsMap, MonMap
+from calamari_common.types import CONFIG, CRUSH_NODE, CRUSH_RULE, CRUSH_MAP, SYNC_OBJECT_STR_TYPE, SYNC_OBJECT_TYPES, OSD, POOL, PG, OsdMap, MdsMap, MonMap, RBD
 from cthulhu.manager import config, salt_config
 from cthulhu.util import now
 
@@ -189,6 +190,7 @@ class ClusterMonitor(gevent.greenlet.Greenlet):
             CRUSH_RULE: CrushRuleRequestFactory,
             OSD: OsdRequestFactory,
             PG: PgRequestFactory,
+            RBD: RbdRequestFactory,
             CONFIG: ConfigRequestFactory,
             POOL: PoolRequestFactory
         }
@@ -422,8 +424,8 @@ class ClusterMonitor(gevent.greenlet.Greenlet):
         else:
             return None
 
-    def request_delete(self, obj_type, obj_id):
-        return self._request('delete', obj_type, obj_id)
+    def request_delete(self, obj_type, obj_id, attributes):
+        return self._request('delete', obj_type, obj_id, attributes)
 
     def request_create(self, obj_type, attributes):
         return self._request('create', obj_type, attributes)

@@ -287,7 +287,7 @@ class RequestCollection(object):
                         # An exception, probably, stringized by salt for us
                         request.set_error(result)
                     request.complete()
-            elif data['fun'] == 'ceph.rados_commands':
+            elif data['fun'] == 'ceph.rados_commands' or data['fun'] == 'ceph.rbd_commands':
                 self._on_rados_completion(data['id'], request, result)
             else:
                 # General case successful JID other than rados_command

@@ -22,6 +22,8 @@ RADOS_TIMEOUT = 20
 # present, although this is the case on a nicely ceph-deploy'd system
 RADOS_NAME = 'client.admin'
 
+RBD_DEFAULT_FEATURES = 61
+
 RBD_COMMAND = ['create_image', 'remove_image', 'rename_image']
 
 def fire_event(data, tag):
@@ -247,8 +249,12 @@ def list_snaps(image):
     """
     snap_info = {}
     for elem in image.list_snaps():
+        image.set_snap(elem['name']);
+        elem['children'] = image.list_children()
 	elem['protected'] = image.is_protected_snap(elem['name'])
 	snap_info[elem['name']] = elem
+
+    image.set_snap('')
 
     return snap_info
 
@@ -364,6 +370,9 @@ def rbd_summary(cluster_handle):
             image = rbd.Image(ioctx, name)
             info = get_image_info(image)
             rbd_summary[pool].update({name : info})
+            image.close()
+
+        ioctx.close()
 
     return rbd_summary
             
@@ -655,6 +664,9 @@ def get_cluster_object(cluster_name, sync_type, since):
                 data['osd_perf'] = json.loads(raw)
             else:
                 data['osd_perf'] = {}
+
+    cluster_handle.shutdown()     
+
     return {
         'type': sync_type,
         'fsid': fsid,
@@ -901,6 +913,9 @@ class Rbd(object):
     """
 
     def __init__(self, cluster_name="ceph"):
+
+        import rbd
+
         self._cluster_name = cluster_name
         self._rbd_inst = rbd.RBD()
         self._ioctx = None
@@ -926,20 +941,20 @@ class Rbd(object):
             "stripe_count": objects to stripe over before looping, default is 0
        """
         order = arg_dict.get('order', None)
-        old_format = arg_dict.get('old_format', True)
-        features = arg_dict.get('features', 0)
+        old_format = arg_dict.get('old_format', False)
+        features = arg_dict.get('features', RBD_DEFAULT_FEATURES)
         stripe_unit = arg_dict.get('stripe_unit', 0)
         stripe_count = arg_dict.get('stripe_count', 0)
-        self._rbd_inst.create(self._ioctx, arg_dict['image_name'], arg_dict['size'], order,
+        self._rbd_inst.create(self._ioctx, arg_dict['name'], arg_dict['size'], order,
                               old_format, features, stripe_unit, stripe_count)
 
     def remove_image(self, arg_dict):
         """
         Delete an RBD image. 
         """
-        self._rbd_inst.remove(self._ioctx, arg_dict['image_name'])
+        self._rbd_inst.remove(self._ioctx, arg_dict['name'])
 
-    def image_resize(self, arg_dict):
+    def resize_image(self, arg_dict):
         """
         Change the size of the image.
 
@@ -947,6 +962,29 @@ class Rbd(object):
          type size: int
         """
         self._image.resize(arg_dict['size'])
+
+    def update_features(self, arg_dict):
+        """
+        Updates the features bitmask of the image by enabling/disabling
+        a single feature.  The feature must support the ability to be
+        dynamically enabled/disabled.
+
+        :param features: feature bitmask to enable/disable
+        :type features: int
+        :param enabled: whether to enable/disable the feature
+        :type enabled: bool
+        :raises: :class:`InvalidArgument`
+        """        
+   
+        old_features = self._image.features()
+        new_features = arg_dict['features']
+        
+        enable_features = new_features & (~old_features)
+        disable_features = old_features & (~new_features)
+        if enable_features > 0:
+            self._image.update_features(enable_features, 1)
+        if disable_features > 0:
+            self._image.update_features(disable_features, 0)
 
     def copy_image(self, arg_dict):
         """
@@ -964,7 +1002,7 @@ class Rbd(object):
         """
         Rename an RBD image.
         """
-        self._rbd_inst.rename(self._ioctx, arg_dict['old_name'], arg_dict['new_name'])
+        self._rbd_inst.rename(self._ioctx, arg_dict['name'], arg_dict['new_name'])
 
     def create_snap_shot(self, arg_dict):
         """
@@ -1021,7 +1059,7 @@ class Rbd(object):
         """
         features = arg_dict.get('features', 0)
         order = arg_dict.get('order', None)
-        self._rbd_inst.clone(self._ioctx, arg_dict['image_name'], arg_dict['snap_name'], self._dest_ioctx,
+        self._rbd_inst.clone(self._ioctx, arg_dict['name'], arg_dict['snap_name'], self._dest_ioctx,
                              arg_dict['clone_image'], features, order)
 
     def flatten_image(self, arg_dict):
@@ -1033,42 +1071,61 @@ class Rbd(object):
 
 def rbd_commands(fsid, cluster_name, commands):
 
-    rbd = Rbd(cluster_name=cluster_name)
+    import rados
+    import rbd
 
-    rbd._result = {}
+    inst = Rbd(cluster_name=cluster_name)
+
+    inst._result = {}
     for i, (prefix, arg_dict) in enumerate(commands):
 
-        if not hasattr(rbd, prefix):
+        if not hasattr(inst, prefix):
 	    continue
 
-        func = getattr(rbd, prefix)
-        cluster_handle = rados.Rados(name=RADOS_NAME, clustername=rbd._cluster_name, conffile='')
-        cluster_handle.connect(timeout=RBD_TIMEOUT)
+        func = getattr(inst, prefix)
+        cluster_handle = rados.Rados(name=RADOS_NAME, clustername=inst._cluster_name, conffile='')
+        cluster_handle.connect(timeout=RADOS_TIMEOUT)
+        versions = cluster_status(cluster_handle, cluster_name)['versions']
 
         try:
-            rbd._ioctx = cluster_handle.open_ioctx(arg_dict['pool_name'])
-	    rbd._dest_ioctx = cluster_handle.open_ioctx(arg_dict['dest_pool']) \
+            inst._ioctx = cluster_handle.open_ioctx(arg_dict['pool_name'])
+	    inst._dest_ioctx = cluster_handle.open_ioctx(arg_dict['dest_pool']) \
 	        if arg_dict.has_key('dest_pool') else None
 
 	    try:
  
                 if prefix not in RBD_COMMAND:
-		    name = arg_dict['image_name']
+		    name = arg_dict['name']
 		    snap_shot = arg_dict.get('snap_shot', None)
 		    read_only = arg_dict.get('read_only', False)
-		    rbd._result[name] = self._result.get(name, {})
-		    rbd._image = rbd.Image(rbd._ioctx, arg_dict['image_name'], snap_shot, read_only)
+		    inst._result[name] = inst._result.get(name, {})
+		    inst._image = rbd.Image(inst._ioctx, arg_dict['name'], snap_shot, read_only)
 
 	        try:
 		    func(arg_dict)
+                except:
+                    return {
+                        'error': True,
+                        'results': inst._result,
+                        'error_status': 'RBD Error',
+                        'versions': versions,
+                        'fsid': fsid
+                    }
 	        finally:
-		    rbd._image.close() if rbd._image else None
+		    inst._image.close() if inst._image else None
 
             finally:
-	        rbd._dest_ioctx.close() if rbd._dest_ioctx else None
-	        rbd._ioctx.close() if rbd._ioctx else None
+	        inst._dest_ioctx.close() if inst._dest_ioctx else None
+	        inst._ioctx.close() if inst._ioctx else None
 
         finally:
 	    cluster_handle.shutdown()
 
-    return rbd._result
+    return {
+        'error': False,
+        'results': inst._result,
+        'error_status': '',
+        'versions': versions,
+        'fsid': fsid
+    }
+

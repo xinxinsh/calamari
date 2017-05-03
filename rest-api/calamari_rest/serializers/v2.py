@@ -439,21 +439,25 @@ class PgSerializer(serializers.Serializer):
     up = serializers.IntegerField(help_text="Up Set")
     acting = serializers.IntegerField(help_text="Acting Set")
 
-class RbdSerializer(serializers.Serializer):
+class RbdSerializer(ValidatingSerializer):
     class Meta:
         fields = ('name', 'prefix', 'size', 'obj_size', 'order', 'old_format', 'flags', 'features', 'num_objs', 'parent_name', 'parent_pool')
+        create_allowed = ('name', 'size', 'order', 'features', 'old_format', 'stripe_unit', 'stripe_count')
+        create_required = ('name', 'size')
+        modify_allowed = ('name', 'size', 'features')
+        modify_required = ()
 
     name =  serializers.CharField(help_text="RBD Name")
-    prefix =  serializers.CharField(source='block_name_prefix', help_text="Block Name Prefix")
+    prefix =  serializers.CharField(source='block_name_prefix', help_text="Block Name Prefix", required=False)
     size = serializers.IntegerField(help_text="RBD Size")
-    obj_size = serializers.IntegerField(help_text="RBD Object Size")
-    order = serializers.IntegerField(help_text="RBD Object Order")
-    old_format = serializers.BooleanField(help_text="Old Format")
-    flags = serializers.IntegerField(help_text="RBD Flags")
-    features = serializers.IntegerField(help_text="RBD Features")
-    num_objs = serializers.IntegerField(help_text="Number of Objects")
-    parent_name = serializers.CharField(help_text="RBD Parent Name")
-    parent_pool = serializers.CharField(help_text="RBD Parent Pool")
+    obj_size = serializers.IntegerField(help_text="RBD Object Size", required=False)
+    order = serializers.IntegerField(help_text="RBD Object Order", required=False)
+    old_format = serializers.BooleanField(help_text="Old Format", required=False)
+    flags = serializers.IntegerField(help_text="RBD Flags", required=False)
+    features = serializers.IntegerField(help_text="RBD Features", required=False)
+    num_objs = serializers.IntegerField(help_text="Number of Objects", required=False)
+    parent_name = serializers.CharField(help_text="RBD Parent Name", required=False)
+    parent_pool = serializers.CharField(help_text="RBD Parent Pool", required=False)
 
 class SnapSerializer(serializers.Serializer):
     class Meta:

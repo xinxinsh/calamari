@@ -10,7 +10,7 @@ from calamari_common.salt_wrapper import Key, master_config, LocalClient
 from cthulhu.manager import config
 from cthulhu.log import log
 from calamari_common.types import OsdMap, SYNC_OBJECT_STR_TYPE, OSD, OSD_MAP, POOL, PG, CONFIG, CLUSTER, CRUSH_NODE, CRUSH_MAP, CRUSH_RULE, CRUSH_TYPE, ServiceId,\
-    NotFound, SERVER
+    NotFound, SERVER, RBD
 from cthulhu.manager.user_request import SaltRequest
 
 
@@ -148,6 +148,9 @@ class RpcInterface(object):
         elif object_type == OSD_MAP:
             return cluster.request_update('update_config', OSD, object_id, attributes)
 
+        elif object_type == RBD:
+            return cluster.request_update('update', RBD, object_id, attributes)
+
         elif object_type == CRUSH_MAP:
             return cluster.request_update('update', CRUSH_MAP, object_id, attributes)
 
@@ -211,6 +214,8 @@ class RpcInterface(object):
 
         if object_type == POOL:
             return cluster.request_create(POOL, attributes)
+        elif object_type == RBD:
+            return cluster.request_create(RBD, attributes)
         elif object_type == CRUSH_NODE:
             return cluster.request_create(CRUSH_NODE, attributes)
         elif object_type == CRUSH_RULE:
@@ -218,15 +223,17 @@ class RpcInterface(object):
         else:
             raise NotImplementedError(object_type)
 
-    def delete(self, fs_id, object_type, object_id):
+    def delete(self, fs_id, object_type, object_id, attributes):
         cluster = self._fs_resolve(fs_id)
 
         if object_type == POOL:
-            return cluster.request_delete(POOL, object_id)
+            return cluster.request_delete(POOL, object_id, attributes)
+        elif object_type == RBD:
+            return cluster.request_delete(RBD, object_id, attributes)
         elif object_type == CRUSH_NODE:
-            return cluster.request_delete(CRUSH_NODE, object_id)
+            return cluster.request_delete(CRUSH_NODE, object_id, attributes)
         elif object_type == CRUSH_RULE:
-            return cluster.request_delete(CRUSH_RULE, object_id)
+            return cluster.request_delete(CRUSH_RULE, object_id, attributes)
         else:
             raise NotImplementedError(object_type)
 
