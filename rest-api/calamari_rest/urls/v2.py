@@ -137,6 +137,9 @@ urlpatterns = patterns(
     url(r'^cluster/(?P<fsid>[a-zA-Z0-9-]+)/pool/(?P<pool_id>\d+)/rbd/(?P<rbd_name>[a-zA-Z0-9-_]+)/snap$',
         calamari_rest.views.v2.SnapViewSet.as_view({'get': 'retrieve'}),
         name='cluster-rbd-snap'),
+    url(r'^cluster/(?P<fsid>[a-zA-Z0-9-]+)/pool/(?P<pool_id>\d+)/rbd/(?P<rbd_name>[a-zA-Z0-9-_]+)/snap/(?P<snap_name>[a-zA-Z0-9-_]+)$',
+        calamari_rest.views.v2.CloneViewSet.as_view({'get': 'list'}),
+        name='cluster-snap-children'),
     
 
     # Direct access to SyncObjects, mainly for debugging

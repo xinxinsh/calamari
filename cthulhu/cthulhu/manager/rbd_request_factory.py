@@ -12,7 +12,7 @@ class RbdRequestFactory(RequestFactory):
     def delete(self, obj_id, attributes):
         attributes.update({'name': obj_id})
 	return RbdRequest(
-            "Initiating Create RBD on {cluster_name}".format(cluster_name=self._cluster_monitor),
+            "Initiating Delete RBD on {cluster_name}".format(cluster_name=self._cluster_monitor),
             self._cluster_monitor.fsid,
             self._cluster_monitor.name,
             [('remove_image', attributes)])

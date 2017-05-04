@@ -250,7 +250,10 @@ def list_snaps(image):
     snap_info = {}
     for elem in image.list_snaps():
         image.set_snap(elem['name']);
-        elem['children'] = image.list_children()
+        clones = []
+        for p,n in image.list_children():
+            clones.append({'pool':p,'name':n})
+        elem['children'] = clones
 	elem['protected'] = image.is_protected_snap(elem['name'])
 	snap_info[elem['name']] = elem
 

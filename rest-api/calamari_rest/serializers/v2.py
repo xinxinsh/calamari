@@ -459,15 +459,23 @@ class RbdSerializer(ValidatingSerializer):
     parent_name = serializers.CharField(help_text="RBD Parent Name", required=False)
     parent_pool = serializers.CharField(help_text="RBD Parent Pool", required=False)
 
+class CloneSerializer(serializers.Serializer):
+    class Meta:
+        fields = ('pool', 'name')
+
+    pool =  serializers.CharField(help_text='Pool Name')
+    name =  serializers.CharField(help_text='RBD Name')
+
 class SnapSerializer(serializers.Serializer):
     class Meta:
-        fields = ('name', 'id', 'size', 'protected')
+        fields = ('name', 'id', 'size', 'protected', 'children')
 
 
     name =  serializers.CharField(help_text="Snap Name")
     id = serializers.IntegerField(help_text="Snap ID")
     size = serializers.CharField(help_text="Snap Size")
     protected = serializers.BooleanField(help_text="Snap Protected Flag")
+    children = CloneSerializer(many=True, help_text="List of children")
 
 class LockSerializer(serializers.Serializer):
     class Meta:

@@ -13,7 +13,7 @@ from calamari_rest.parsers.v2 import CrushMapParser
 from calamari_rest.serializers.v2 import PoolSerializer, CrushRuleSetSerializer, CrushRuleSerializer, CrushNodeSerializer, CrushTypeSerializer,\
     ServerSerializer, SimpleServerSerializer, SaltKeySerializer, RequestSerializer, \
     ClusterSerializer, EventSerializer, LogTailSerializer, OsdSerializer, ConfigSettingSerializer, MonSerializer, OsdConfigSerializer, \
-    CliSerializer, PgSerializer, OsddfSerializer, OsdperfSerializer, RbdSerializer, SnapSerializer, LockSerializer
+    CliSerializer, PgSerializer, OsddfSerializer, OsdperfSerializer, RbdSerializer, SnapSerializer, LockSerializer, CloneSerializer
 from calamari_rest.views.database_view_set import DatabaseViewSet
 from calamari_rest.views.exceptions import ServiceUnavailable
 from calamari_rest.views.paginated_mixin import PaginatedMixin
@@ -209,6 +209,19 @@ Allow Get Snap for specific RBD
         snaps = volumes_by_pool[pool_name][rbd_name]['snaps']
 
         return Response(SnapSerializer([DataObject(v) for k, v in snaps.items()], many=True).data)
+
+class CloneViewSet(RPCViewSet):
+    """
+List of Children of snapshot
+    """
+    def list(self, request, fsid, pool_id, rbd_name, snap_name):
+        children = {}
+
+        volumes_by_pool = self.client.get_sync_object(fsid, 'rbd_summary')
+        pool_name = self.client.get(fsid, POOL, int(pool_id))['pool_name']
+
+        children = volumes_by_pool[pool_name][rbd_name]['snaps'][snap_name]['children']
+        return Response(CloneSerializer([DataObject(v) for v in children]).data)
 
 class LockViewSet(RPCViewSet):
     """
