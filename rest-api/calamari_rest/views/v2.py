@@ -24,7 +24,7 @@ from calamari_rest.permissions import IsRoleAllowed
 from calamari_rest.views.crush_node import lookup_ancestry
 from calamari_common.config import CalamariConfig
 from calamari_common.types import CRUSH_MAP, CRUSH_RULE, CRUSH_NODE, CRUSH_TYPE, POOL, OSD, PG, CONFIG, USER_REQUEST_COMPLETE, USER_REQUEST_SUBMITTED, \
-    OSD_IMPLEMENTED_COMMANDS, MON, OSD_MAP, SYNC_OBJECT_TYPES, ServiceId, RBD
+    OSD_IMPLEMENTED_COMMANDS, MON, OSD_MAP, SYNC_OBJECT_TYPES, ServiceId, RBD, SNAP
 from calamari_common.db.event import Event, severity_from_str, SEVERITIES
 
 from django.views.decorators.csrf import csrf_exempt
@@ -196,12 +196,12 @@ Allow list RBDs for specific cluster
 
 class SnapViewSet(RPCViewSet):
     """
-Allow Get Snap for specific RBD
+SnapShot is a consistent point of view of specific RBD
     """
     
     serializer_class = SnapSerializer
 
-    def retrieve(self, request, fsid, pool_id, rbd_name):
+    def list(self, request, fsid, pool_id, rbd_name):
         
         volumes_by_pool = self.client.get_sync_object(fsid, 'rbd_summary')
         pool_name = self.client.get(fsid, POOL, int(pool_id))['pool_name']
@@ -209,6 +209,69 @@ Allow Get Snap for specific RBD
         snaps = volumes_by_pool[pool_name][rbd_name]['snaps']
 
         return Response(SnapSerializer([DataObject(v) for k, v in snaps.items()], many=True).data)
+
+    def retrieve(self, request, fsid, pool_id, rbd_name, snap_name):
+        
+        volumes_by_pool = self.client.get_sync_object(fsid, 'rbd_summary')
+        pool_name = self.client.get(fsid, POOL, int(pool_id))['pool_name']
+
+        try:
+            snap = volumes_by_pool[pool_name][rbd_name]['snaps'][snap_name]
+        except KeyError:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        return Response(SnapSerializer(DataObject(snap)).data)
+
+    def create(self, request, fsid, pool_id, rbd_name):
+        serializer = self.serializer_class(data=request.DATA)
+        if serializer.is_valid(request.method):
+            attrs = serializer.get_data()
+            pool_name = self.client.get(fsid, POOL, int(pool_id))['pool_name']
+            attrs.update({'pool_name': pool_name})
+            attrs.update({'snap_name': attrs['name']})
+            attrs.update({'name': rbd_name})
+            create_response = self.client.create(fsid, SNAP, attrs)
+            return Response(create_response, status=status.HTTP_202_ACCEPTED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def destroy(self, request, fsid, pool_id, rbd_name, snap_name):
+        try:
+            volumes_by_pool = self.client.get_sync_object(fsid, 'rbd_summary')
+            pool_name = self.client.get(fsid, POOL, int(pool_id))['pool_name']
+            snap = volumes_by_pool[pool_name][rbd_name]['snaps'][snap_name]
+        except KeyError:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        attrs = {}
+        pool_name = self.client.get(fsid, POOL, int(pool_id))['pool_name']
+        attrs.update({'pool_name': pool_name})
+        attrs.update({'snap_name': snap_name})
+        delete_response = self.client.delete(fsid, SNAP, rbd_name, attrs)
+        return Response(delete_response, status=status.HTTP_202_ACCEPTED)
+
+    def update(self, request, fsid, pool_id, rbd_name, snap_name):
+        serializer = self.serializer_class(data=request.DATA)
+        if serializer.is_valid(request.method):
+            try:
+                volumes_by_pool = self.client.get_sync_object(fsid, 'rbd_summary')
+                pool_name = self.client.get(fsid, POOL, int(pool_id))['pool_name']
+                snap = volumes_by_pool[pool_name][rbd_name]['snaps'][snap_name]
+            except KeyError:
+                return Response(status=status.HTTP_404_NOT_FOUND)
+
+            attrs = serializer.get_data()
+            pool_name = self.client.get(fsid, POOL, int(pool_id))['pool_name']
+            attrs.update({'pool_name': pool_name})
+            if 'name' in attrs and snap_name != attrs['name']:
+                attrs.update({'new_snap_name': attrs['name']})
+                attrs.update({'snap_name': snap_name})
+            else:
+                attrs.update({'snap_name': snap_name})
+            update_response = self.client.update(fsid, SNAP, rbd_name, attrs)
+            return Response(update_response, status=status.HTTP_202_ACCEPTED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class CloneViewSet(RPCViewSet):
     """

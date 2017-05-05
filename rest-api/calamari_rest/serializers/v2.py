@@ -466,16 +466,19 @@ class CloneSerializer(serializers.Serializer):
     pool =  serializers.CharField(help_text='Pool Name')
     name =  serializers.CharField(help_text='RBD Name')
 
-class SnapSerializer(serializers.Serializer):
+class SnapSerializer(ValidatingSerializer):
     class Meta:
         fields = ('name', 'id', 'size', 'protected', 'children')
+        create_allowed = ('name',)
+        create_required = ('name',)
+        modify_allowed = ('name', 'protected')
+        modify_required = ()
 
-
-    name =  serializers.CharField(help_text="Snap Name")
-    id = serializers.IntegerField(help_text="Snap ID")
-    size = serializers.CharField(help_text="Snap Size")
-    protected = serializers.BooleanField(help_text="Snap Protected Flag")
-    children = CloneSerializer(many=True, help_text="List of children")
+    name =  serializers.CharField(help_text="Snap Name", required=False)
+    id = serializers.IntegerField(help_text="Snap ID", required=False)
+    size = serializers.CharField(help_text="Snap Size", required=False)
+    protected = serializers.BooleanField(help_text="Snap Protected Flag", required=False)
+    children = CloneSerializer(many=True, help_text="List of children", required=False)
 
 class LockSerializer(serializers.Serializer):
     class Meta:

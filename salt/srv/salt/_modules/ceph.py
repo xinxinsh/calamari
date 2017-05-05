@@ -1007,7 +1007,7 @@ class Rbd(object):
         """
         self._rbd_inst.rename(self._ioctx, arg_dict['name'], arg_dict['new_name'])
 
-    def create_snap_shot(self, arg_dict):
+    def create_snapshot(self, arg_dict):
         """
         Create a snapshot of the image.
 
@@ -1017,7 +1017,7 @@ class Rbd(object):
         """
         self._image.create_snap(arg_dict['snap_name'])
 
-    def remove_snap_shot(self, arg_dict):
+    def remove_snapshot(self, arg_dict):
         """
         Delete a snapshot of the image.
 
@@ -1027,7 +1027,7 @@ class Rbd(object):
         """
         self._image.remove_snap(arg_dict['snap_name'])
 
-    def protect_snap(self, arg_dict):
+    def protect_snapshot(self, arg_dict):
         """
         Mark a snapshot as protected. This means it can't be deleted
         until it is unprotected.
@@ -1036,9 +1036,10 @@ class Rbd(object):
         :type snap_name: str
         :raises: :class:`IOError`, :class:`ImageNotFound`
         """
-        self._image.protect_snap(arg_dict['snap_name'])
+        if not self._image.is_protected_snap(arg_dict['snap_name']):
+            self._image.protect_snap(arg_dict['snap_name'])
 
-    def unprotect_snap(self, arg_dict):
+    def unprotect_snapshot(self, arg_dict):
         """
         Mark a snapshot unprotected. This allows it to be deleted if
         it was protected.
@@ -1046,7 +1047,20 @@ class Rbd(object):
         :type snap_name: str
         :raises: :class:`IOError`, :class:`ImageNotFound`
         """
-        self._image.unprotect_snap(arg_dict['snap_name'])
+        if self._image.is_protected_snap(arg_dict['snap_name']):
+            self._image.unprotect_snap(arg_dict['snap_name'])
+
+    def rename_snapshot(self, arg_dict):
+        """
+        rename a snapshot of the image.
+
+        :param srcname: the src name of the snapshot
+        :type srcname: str
+        :param dstname: the dst name of the snapshot
+        :type dstname: str
+        :raises: :class:`ImageExists`
+        """
+        self._image.rename_snap(arg_dict['snap_name'], arg_dict['new_snap_name'])
 
     def roll_back_snapshot(self, arg_dict):
         """

@@ -135,9 +135,12 @@ urlpatterns = patterns(
         calamari_rest.views.v2.LockViewSet.as_view({'get': 'retrieve'}),
         name='cluster-rbd-lock'),
     url(r'^cluster/(?P<fsid>[a-zA-Z0-9-]+)/pool/(?P<pool_id>\d+)/rbd/(?P<rbd_name>[a-zA-Z0-9-_]+)/snap$',
-        calamari_rest.views.v2.SnapViewSet.as_view({'get': 'retrieve'}),
+        calamari_rest.views.v2.SnapViewSet.as_view({'get': 'list', 'post': 'create' }),
         name='cluster-rbd-snap'),
     url(r'^cluster/(?P<fsid>[a-zA-Z0-9-]+)/pool/(?P<pool_id>\d+)/rbd/(?P<rbd_name>[a-zA-Z0-9-_]+)/snap/(?P<snap_name>[a-zA-Z0-9-_]+)$',
+        calamari_rest.views.v2.SnapViewSet.as_view({'get': 'retrieve', 'delete': 'destroy', 'patch': 'update'}),
+        name='cluster-rbd-snap-detail'),
+    url(r'^cluster/(?P<fsid>[a-zA-Z0-9-]+)/pool/(?P<pool_id>\d+)/rbd/(?P<rbd_name>[a-zA-Z0-9-_]+)/snap/(?P<snap_name>[a-zA-Z0-9-_]+)/children$',
         calamari_rest.views.v2.CloneViewSet.as_view({'get': 'list'}),
         name='cluster-snap-children'),
     
