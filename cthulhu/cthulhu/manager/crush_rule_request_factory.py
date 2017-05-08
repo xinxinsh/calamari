@@ -33,7 +33,7 @@ class CrushRuleRequestFactory(RequestFactory):
         message = "Creating CRUSH rule in {cluster_name}".format(cluster_name=self._cluster_monitor.name)
         return OsdMapModifyingRequest(message, self._cluster_monitor.fsid, self._cluster_monitor.name, commands)
 
-    def delete(self, rule_id):
+    def delete(self, rule_id, attributes):
         crush_rule = self.osd_map.crush_rule_by_id[int(rule_id)]
         commands = [('osd crush rule rm', {'name': crush_rule['rule_name']})]
         message = "Removing CRUSH rule in {cluster_name}".format(cluster_name=self._cluster_monitor.name)

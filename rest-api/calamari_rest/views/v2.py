@@ -335,7 +335,7 @@ The CRUSH algorithm distributes data objects among storage devices according to 
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     def destroy(self, request, fsid, node_id):
-        delete_response = self.client.delete(fsid, CRUSH_NODE, int(node_id), status=status.HTTP_202_ACCEPTED)
+        delete_response = self.client.delete(fsid, CRUSH_NODE, int(node_id), {})
         return Response(delete_response, status=status.HTTP_202_ACCEPTED)
 
     def update(self, request, fsid, node_id):
@@ -411,7 +411,7 @@ together to a pool.
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def destroy(self, request, fsid, rule_id):
-        delete_response = self.client.delete(fsid, CRUSH_RULE, rule_id, status=status.HTTP_202_ACCEPTED)
+        delete_response = self.client.delete(fsid, CRUSH_RULE, rule_id, {})
         return Response(delete_response, status=status.HTTP_202_ACCEPTED)
         
 
@@ -747,7 +747,7 @@ but those without static defaults will be set to null.
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def destroy(self, request, fsid, pool_id):
-        delete_response = self.client.delete(fsid, POOL, int(pool_id), status=status.HTTP_202_ACCEPTED)
+        delete_response = self.client.delete(fsid, POOL, int(pool_id), {})
         return Response(delete_response, status=status.HTTP_202_ACCEPTED)
 
     def _validate_semantics(self, fsid, pool_id, data):

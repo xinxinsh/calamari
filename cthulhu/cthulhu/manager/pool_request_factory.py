@@ -50,7 +50,7 @@ class PoolRequestFactory(RequestFactory):
 
         return commands
 
-    def delete(self, pool_id):
+    def delete(self, pool_id, attributes):
         # Resolve pool ID to name
         pool_name = self._resolve_pool(pool_id)['pool_name']
 

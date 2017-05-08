@@ -52,7 +52,7 @@ class CrushNodeRequestFactory(RequestFactory):
         message = "Creating CRUSH node in {cluster_name}".format(cluster_name=self._cluster_monitor.name)
         return OsdMapModifyingRequest(message, self._cluster_monitor.fsid, self._cluster_monitor.name, commands)
 
-    def delete(self, node_id):
+    def delete(self, node_id, attributes):
         current_node = self.osd_map.get_tree_node(node_id)
         commands = [remove_bucket(current_node['name'], current_node)]
         message = "Removing CRUSH node in {cluster_name}".format(cluster_name=self._cluster_monitor.name)
