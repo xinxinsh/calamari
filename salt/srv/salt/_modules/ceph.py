@@ -322,11 +322,15 @@ def get_image_parent_info(image):
     else:
         return info
 
-#def get_image_meta(image):
-#    """
-#    Get metadata about the image
-#    """
-#    return image.metadata_list()
+def get_image_meta(image):
+    """
+    Get metadata about the image
+    """
+    data = {}
+    tuples = image.metadata_list()
+    for k, v in tuples:
+        data.update({k : v})
+    return data
 
 def get_image_info(image):
     """
@@ -340,7 +344,7 @@ def get_image_info(image):
     lockers = get_image_lockers(image)
     is_old = old_format(image)
     snaps = list_snaps(image)
-#    meta = get_image_meta(image)
+    meta = get_image_meta(image)
 
     image_info.update(stat)
     image_info.update({'parent_info': parent_info})
@@ -349,7 +353,7 @@ def get_image_info(image):
     image_info.update({'lockers': lockers})
     image_info.update({'old_format': is_old})
     image_info.update({'snaps': snaps})
-#    image_info.update({'meta': meta})
+    image_info.update({'meta': meta})
 
     return image_info
 
@@ -1084,6 +1088,18 @@ class Rbd(object):
         Flatten clone image (copy all blocks from parent to child)
         """
         self._image.flatten()
+
+    def set_metadata(self, arg_dict):
+        """
+        Set metadata for image
+        """
+        self._image.metadata_set(arg_dict['key'], arg_dict['value'])
+
+    def remove_metadata(self, arg_dict):
+        """
+        Remove metadata for image
+        """
+        self._image.metadata_remove(arg_dict['key'])
 
 
 def rbd_commands(fsid, cluster_name, commands):

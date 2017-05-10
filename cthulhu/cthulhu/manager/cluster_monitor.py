@@ -19,9 +19,10 @@ from cthulhu.manager.pg_request_factory import PgRequestFactory
 from cthulhu.manager.rbd_request_factory import RbdRequestFactory
 from cthulhu.manager.snap_request_factory import SnapRequestFactory
 from cthulhu.manager.config_request_factory import ConfigRequestFactory
+from cthulhu.manager.meta_request_factory import MetaRequestFactory
 from cthulhu.manager.plugin_monitor import PluginMonitor
 from calamari_common.types import CONFIG, CRUSH_NODE, CRUSH_RULE, CRUSH_MAP, SYNC_OBJECT_STR_TYPE, SYNC_OBJECT_TYPES, OSD, POOL, PG, OsdMap, MdsMap, MonMap, \
-                                  RBD, SNAP
+                                  RBD, SNAP, META
 from cthulhu.manager import config, salt_config
 from cthulhu.util import now
 
@@ -194,6 +195,7 @@ class ClusterMonitor(gevent.greenlet.Greenlet):
             PG: PgRequestFactory,
             RBD: RbdRequestFactory,
             SNAP: SnapRequestFactory,
+            META: MetaRequestFactory,
             CONFIG: ConfigRequestFactory,
             POOL: PoolRequestFactory
         }

@@ -13,7 +13,7 @@ from calamari_rest.parsers.v2 import CrushMapParser
 from calamari_rest.serializers.v2 import PoolSerializer, CrushRuleSetSerializer, CrushRuleSerializer, CrushNodeSerializer, CrushTypeSerializer,\
     ServerSerializer, SimpleServerSerializer, SaltKeySerializer, RequestSerializer, \
     ClusterSerializer, EventSerializer, LogTailSerializer, OsdSerializer, ConfigSettingSerializer, MonSerializer, OsdConfigSerializer, \
-    CliSerializer, PgSerializer, OsddfSerializer, OsdperfSerializer, RbdSerializer, SnapSerializer, LockSerializer, CloneSerializer
+    CliSerializer, PgSerializer, OsddfSerializer, OsdperfSerializer, RbdSerializer, SnapSerializer, LockSerializer, CloneSerializer, MetaSerializer
 from calamari_rest.views.database_view_set import DatabaseViewSet
 from calamari_rest.views.exceptions import ServiceUnavailable
 from calamari_rest.views.paginated_mixin import PaginatedMixin
@@ -24,7 +24,7 @@ from calamari_rest.permissions import IsRoleAllowed
 from calamari_rest.views.crush_node import lookup_ancestry
 from calamari_common.config import CalamariConfig
 from calamari_common.types import CRUSH_MAP, CRUSH_RULE, CRUSH_NODE, CRUSH_TYPE, POOL, OSD, PG, CONFIG, USER_REQUEST_COMPLETE, USER_REQUEST_SUBMITTED, \
-    OSD_IMPLEMENTED_COMMANDS, MON, OSD_MAP, SYNC_OBJECT_TYPES, ServiceId, RBD, SNAP
+    OSD_IMPLEMENTED_COMMANDS, MON, OSD_MAP, SYNC_OBJECT_TYPES, ServiceId, RBD, SNAP, META
 from calamari_common.db.event import Event, severity_from_str, SEVERITIES
 
 from django.views.decorators.csrf import csrf_exempt
@@ -272,6 +272,49 @@ SnapShot is a consistent point of view of specific RBD
             return Response(update_response, status=status.HTTP_202_ACCEPTED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class MetaViewSet(RPCViewSet):
+    """
+Metadata of Image
+    """
+    serializer = MetaSerializer
+
+    def list(self, request, fsid, pool_id, rbd_name):
+        volumes_by_pool = self.client.get_sync_object(fsid, 'rbd_summary')
+        pool_name = self.client.get(fsid, POOL, int(pool_id))['pool_name']
+        meta = volumes_by_pool[pool_name][rbd_name]['meta']
+        return Response(MetaSerializer([DataObject({'key':k, 'value':v}) for k, v in meta.items()]).data)
+
+    def retrieve(self, request, fsid, pool_id, rbd_name, key):
+        volumes_by_pool = self.client.get_sync_object(fsid, 'rbd_summary')
+        pool_name = self.client.get(fsid, POOL, int(pool_id))['pool_name']
+        meta = volumes_by_pool[pool_name][rbd_name]['meta'][key]
+        return Response(MetaSerializer(DataObject({'key':key, 'value':meta})).data)
+
+    def create(self, request, fsid, pool_id, rbd_name):
+        attrs = request.DATA
+        pool_name = self.client.get(fsid, POOL, int(pool_id))['pool_name']
+        attrs.update({'pool_name': pool_name})
+        attrs.update({'name': rbd_name})
+        create_response = self.client.create(fsid, META, attrs)
+        return Response(create_response, status=status.HTTP_202_ACCEPTED)
+
+    def update(self, request, fsid, pool_id, rbd_name):
+        attrs = request.DATA
+        pool_name = self.client.get(fsid, POOL, int(pool_id))['pool_name']
+        attrs.update({'pool_name': pool_name})
+        attrs.update({'name': rbd_name})
+        create_response = self.client.update(fsid, META, attrs)
+        return Response(create_response, status=status.HTTP_202_ACCEPTED)
+
+    def destroy(self, request, fsid, pool_id, rbd_name, key):
+        attrs = {}
+        pool_name = self.client.get(fsid, POOL, int(pool_id))['pool_name']
+        attrs.update({'pool_name': pool_name})
+        attrs.update({'name': rbd_name})
+        attrs.update({'key': key})
+        create_response = self.client.delete(fsid, META, key,  attrs)
+        return Response(create_response, status=status.HTTP_202_ACCEPTED)
 
 class CloneViewSet(RPCViewSet):
     """

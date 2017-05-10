@@ -10,7 +10,7 @@ from calamari_common.salt_wrapper import Key, master_config, LocalClient
 from cthulhu.manager import config
 from cthulhu.log import log
 from calamari_common.types import OsdMap, SYNC_OBJECT_STR_TYPE, OSD, OSD_MAP, POOL, PG, CONFIG, CLUSTER, CRUSH_NODE, CRUSH_MAP, CRUSH_RULE, CRUSH_TYPE, ServiceId,\
-    NotFound, SERVER, RBD, SNAP
+    NotFound, SERVER, RBD, SNAP, META
 from cthulhu.manager.user_request import SaltRequest
 
 
@@ -154,6 +154,9 @@ class RpcInterface(object):
         elif object_type == SNAP:
             return cluster.request_update('update', SNAP, object_id, attributes)
 
+        elif object_type == META:
+            return cluster.request_update('update', META, object_id, attributes)
+
         elif object_type == CRUSH_MAP:
             return cluster.request_update('update', CRUSH_MAP, object_id, attributes)
 
@@ -221,6 +224,8 @@ class RpcInterface(object):
             return cluster.request_create(RBD, attributes)
         elif object_type == SNAP:
             return cluster.request_create(SNAP, attributes)
+        elif object_type == META:
+            return cluster.request_create(META, attributes)
         elif object_type == CRUSH_NODE:
             return cluster.request_create(CRUSH_NODE, attributes)
         elif object_type == CRUSH_RULE:
@@ -237,6 +242,8 @@ class RpcInterface(object):
             return cluster.request_delete(RBD, object_id, attributes)
         elif object_type == SNAP:
             return cluster.request_delete(SNAP, object_id, attributes)
+        elif object_type == META:
+            return cluster.request_delete(META, object_id, attributes)
         elif object_type == CRUSH_NODE:
             return cluster.request_delete(CRUSH_NODE, object_id, attributes)
         elif object_type == CRUSH_RULE:

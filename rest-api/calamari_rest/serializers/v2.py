@@ -487,3 +487,12 @@ class LockSerializer(serializers.Serializer):
     lockers =  serializers.CharField(help_text="Locker Name")
     tag = serializers.CharField(help_text="Locker Tag")
     exclusive = serializers.BooleanField(help_text="Locker Exclusive Flag")
+
+class MetaSerializer(serializers.Serializer):
+    class Meta:
+        fields = ('key', 'value')
+
+
+    key = serializers.CharField(help_text="Name of Metadata")
+    value = serializers.CharField(help_text="Value of Metadata")
+
