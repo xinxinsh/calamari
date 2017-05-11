@@ -87,4 +87,3 @@ import graphite.metrics.urls
 import graphite.dashboard.urls
 patch_views(graphite.metrics.urls)
 patch_views(graphite.dashboard.urls)
-#patch_views(calamari_web.urls)
