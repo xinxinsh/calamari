@@ -1,4 +1,50 @@
 {
+    "osd_perf": {
+        "osd_perf_infos": [
+            {
+                "id": 5, 
+                "perf_stats": {
+                    "apply_latency_ms": 20, 
+                    "commit_latency_ms": 10
+                }
+            }, 
+            {
+                "id": 4, 
+                "perf_stats": {
+                    "apply_latency_ms": 178, 
+                    "commit_latency_ms": 38
+                }
+            }, 
+            {
+                "id": 3, 
+                "perf_stats": {
+                    "apply_latency_ms": 4, 
+                    "commit_latency_ms": 4
+                }
+            }, 
+            {
+                "id": 2, 
+                "perf_stats": {
+                    "apply_latency_ms": 2, 
+                    "commit_latency_ms": 1
+                }
+            }, 
+            {
+                "id": 1, 
+                "perf_stats": {
+                    "apply_latency_ms": 6, 
+                    "commit_latency_ms": 1
+                }
+            }, 
+            {
+                "id": 0, 
+                "perf_stats": {
+                    "apply_latency_ms": 13, 
+                    "commit_latency_ms": 12
+                }
+            }
+        ]
+    }, 
     "pool_max": 8, 
     "max_osd": 168, 
     "created": "2014-03-05 13:06:50.181089", 
@@ -9102,5 +9148,109 @@
             "size": 2
         }
     ], 
-    "fsid": "61723e0f-992b-466e-9c09-9914931bc584"
+    "fsid": "61723e0f-992b-466e-9c09-9914931bc584",
+    "osd_df": {
+        "nodes": [
+            {
+                "kb": 15717356, 
+                "name": "osd.2", 
+                "type_id": 0, 
+                "utilization": 0.26549, 
+                "crush_weight": 0.014999, 
+                "depth": 2, 
+                "kb_avail": 15675628, 
+                "pgs": 0, 
+                "kb_used": 41728, 
+                "var": 0.905765, 
+                "reweight": 1.0, 
+                "type": "osd", 
+                "id": 2
+            }, 
+            {
+                "kb": 15717356, 
+                "name": "osd.5", 
+                "type_id": 0, 
+                "utilization": 0.276535, 
+                "crush_weight": 0.014999, 
+                "depth": 2, 
+                "kb_avail": 15673892, 
+                "pgs": 0, 
+                "kb_used": 43464, 
+                "var": 0.943448, 
+                "reweight": 1.0, 
+                "type": "osd", 
+                "id": 5
+            }, 
+            {
+                "kb": 15717356, 
+                "name": "osd.0", 
+                "type_id": 0, 
+                "utilization": 0.316694, 
+                "crush_weight": 0.014999, 
+                "depth": 2, 
+                "kb_avail": 15667580, 
+                "pgs": 600, 
+                "kb_used": 49776, 
+                "var": 1.080458, 
+                "reweight": 1.0, 
+                "type": "osd", 
+                "id": 0
+            }, 
+            {
+                "kb": 15717356, 
+                "name": "osd.3", 
+                "type_id": 0, 
+                "utilization": 0.372302, 
+                "crush_weight": 0.014999, 
+                "depth": 2, 
+                "kb_avail": 15658840, 
+                "pgs": 600, 
+                "kb_used": 58516, 
+                "var": 1.270172, 
+                "reweight": 1.0, 
+                "type": "osd", 
+                "id": 3
+            }, 
+            {
+                "kb": 15717356, 
+                "name": "osd.1", 
+                "type_id": 0, 
+                "utilization": 0.262105, 
+                "crush_weight": 0.014999, 
+                "depth": 2, 
+                "kb_avail": 15676160, 
+                "pgs": 0, 
+                "kb_used": 41196, 
+                "var": 0.894217, 
+                "reweight": 1.0, 
+                "type": "osd", 
+                "id": 1
+            }, 
+            {
+                "kb": 15717356, 
+                "name": "osd.4", 
+                "type_id": 0, 
+                "utilization": 0.265541, 
+                "crush_weight": 0.014999, 
+                "depth": 2, 
+                "kb_avail": 15675620, 
+                "pgs": 0, 
+                "kb_used": 41736, 
+                "var": 0.905939, 
+                "reweight": 1.0, 
+                "type": "osd", 
+                "id": 4
+            }
+        ], 
+        "stray": [], 
+        "summary": {
+            "total_kb": 94304136, 
+            "dev": 0.039972, 
+            "max_var": 1.270172, 
+            "total_kb_avail": 94027720, 
+            "min_var": 0.894217, 
+            "average_utilization": 0.293111, 
+            "total_kb_used": 276416
+        }
+    }
 }

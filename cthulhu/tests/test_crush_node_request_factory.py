@@ -197,7 +197,7 @@ class TestCrushNodeFactory(TestCase):
 
     @patch('cthulhu.manager.user_request.LocalClient', fake_salt)
     def test_delete_bucket(self):
-        delete_node = self.factory.delete(-2)
+        delete_node = self.factory.delete(-2, {})
         self.assertIsInstance(delete_node, RadosRequest, 'renaming crush node')
 
         delete_node.submit(54321)
