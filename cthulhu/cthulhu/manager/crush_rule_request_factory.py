@@ -99,11 +99,13 @@ def _serialize_rule(rule, ruleset_id):
 def _serialize_steps(rule):
     steps = ''
     for s in rule['steps']:
-        if s.get('op') == 'take':  # need to account for take :(
-            steps += '\n    step {0} {1}'.format(s['op'], s.get('item_name'))
+        if len(s) < 3 and s.get('op') != 'emit':
+            steps += '\n    step {0} {1}'.format(s['op'], s.get('num', ''))
         elif s.get('op') == 'emit':
             steps += '\n    step {0}'.format(s['op'])
         elif len(s) == 3 and s.get('op') != 'take':
             args = s['op'].split('_') + [s['num'], 'type', s['type']]
             steps += '\n    step {0} {1} {2} {3} {4}'.format(*args)
+        elif s.get('op') == 'take':  # need to account for take :(
+            steps += '\n    step {0} {1}'.format(s['op'], s.get('item_name'))
     return steps
