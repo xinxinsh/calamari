@@ -332,6 +332,12 @@ def get_image_meta(image):
         data.update({k : v})
     return data
 
+def get_disk_usage(image):
+    """
+    Get Disk Usage
+    """
+    return image.disk_usage()
+
 def get_image_info(image):
     """
     Get info about the image, including stat, features, lockers, flags, parent info, old format
@@ -345,6 +351,7 @@ def get_image_info(image):
     is_old = old_format(image)
     snaps = list_snaps(image)
     meta = get_image_meta(image)
+    util = get_disk_usage(image)
 
     image_info.update(stat)
     image_info.update({'parent_info': parent_info})
@@ -354,6 +361,7 @@ def get_image_info(image):
     image_info.update({'old_format': is_old})
     image_info.update({'snaps': snaps})
     image_info.update({'meta': meta})
+    image_info.update({'util': util})
 
     return image_info
 
