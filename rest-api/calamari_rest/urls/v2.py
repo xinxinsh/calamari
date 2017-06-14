@@ -121,7 +121,7 @@ urlpatterns = patterns(
         calamari_rest.views.v2.PgViewSet.as_view({'get': 'retrieve'}),
         name='cluster-pg-detail'),
     url(r'^cluster/(?P<fsid>[a-zA-Z0-9-]+)/pg/(?P<pgid>[a-zA-Z0-9-\.]+)/command/(?P<command>[a-zA-Z_]+)$',
-        calamari_rest.views.v2.PgViewSet.as_view({'post': 'apply'}),
+        calamari_rest.views.v2.PgViewSet.as_view({'get': 'valid_commands', 'post': 'apply'}),
         name='cluster-pg-command'),
 
     #RBD

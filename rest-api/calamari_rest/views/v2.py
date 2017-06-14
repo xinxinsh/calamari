@@ -130,6 +130,10 @@ Allows list PGs for a specific cluster
     def get_valid_commands(self, request, fsid, pgid=None):
         return self.client.get_valid_commands(fsid, PG, pgid).get('valid_commands')
 
+    def valid_commands(self, request, fsid, pgid, command):
+        commands = self.get_valid_commands(request, fsid, pgid)
+        return Response({'valid': command in commands})
+
 class RbdViewSet(RPCViewSet):
     """
 Allow list RBDs for specific cluster
