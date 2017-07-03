@@ -68,6 +68,11 @@ class RpcInterface(object):
         except KeyError:
             raise NotFound(POOL, pool_id)
 
+    def get_linux_disks(self):
+        client = LocalClient(config.get('cthulhu', 'salt_config_path'))
+        disks = client.cmd('*', 'disk.linux_disks', [])
+        return disks
+
     def get_cluster(self, fs_id):
         """
         Returns a dict, or None if not found

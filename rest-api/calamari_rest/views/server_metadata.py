@@ -7,6 +7,7 @@ This is a wrapper around the Salt interfaces we use to get this data.
 import logging
 
 import gevent.pool
+from salt.client import LocalClient
 
 from calamari_common.salt_wrapper import master_config, _create_loader, client_config, MasterPillarUtil
 from calamari_common.config import CalamariConfig
@@ -93,3 +94,4 @@ def get_remote_grains(fqdns):
     p.map(_lookup_one, fqdns)
 
     return fqdn_to_grains
+

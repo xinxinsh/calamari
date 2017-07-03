@@ -175,6 +175,11 @@ urlpatterns = patterns(
     url(r'^server/(?P<fqdn>[a-zA-Z0-9-\.]+)/grains$',
         calamari_rest.views.v2.ServerViewSet.as_view({'get': 'retrieve_grains'})),
 
+    url(r'^disk$',
+        calamari_rest.views.v2.DiskViewSet.as_view({'get': 'list'})),
+    url(r'^disk/(?P<fqdn>[a-zA-Z0-9-\.]+)$',
+        calamari_rest.views.v2.DiskViewSet.as_view({'get': 'retrieve'})),
+
     url(r'^cluster/(?P<fsid>[a-zA-Z0-9-]+)/server$',
         calamari_rest.views.v2.ServerClusterViewSet.as_view({'get': 'list'}),
         name='cluster-server-list'),

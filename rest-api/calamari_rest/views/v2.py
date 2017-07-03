@@ -1162,6 +1162,15 @@ server then the FQDN will be modified to its correct value.
         self.client.server_delete(fqdn)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+class DiskViewSet(RPCViewSet):
+    def list(self, request):
+        linux_disks = self.client.get_linux_disks()
+        return Response(linux_disks)
+
+    def retrieve(self, request, fqdn):
+        linux_disks = self.client.get_linux_disks()
+        return Response(linux_disks[fqdn])
+
 
 class EventViewSet(DatabaseViewSet, PaginatedMixin):
     """
